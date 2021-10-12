@@ -1,8 +1,2 @@
-﻿  Screen.cpp
-C:\Users\방찬웅\Desktop\Project\OOP\Tetris\Tetris\Screen.h(70,67): error C4430: 형식 지정자가 없습니다. int로 가정합니다. 참고: C++에서는 기본 int를 지원하지 않습니다.
-C:\Users\방찬웅\Desktop\Project\OOP\Tetris\Tetris\Screen.h(70,67): error C2143: 구문 오류: ','이(가) '&' 앞에 없습니다.
-C:\Users\방찬웅\Desktop\Project\OOP\Tetris\Tetris\Screen.h(70,82): error C2143: 구문 오류: ')'이(가) '{' 앞에 없습니다.
-C:\Users\방찬웅\Desktop\Project\OOP\Tetris\Tetris\Screen.h(70,90): error C2059: 구문 오류: ')'
-C:\Users\방찬웅\Desktop\Project\OOP\Tetris\Tetris\Screen.h(71,2): error C2059: 구문 오류: '{'
-C:\Users\방찬웅\Desktop\Project\OOP\Tetris\Tetris\Screen.h(71,2): error C2334: '{' 앞에 예기치 않은 토큰이 있습니다. 명백한 함수 본문을 건너뜁니다.
-C:\Users\방찬웅\Desktop\Project\OOP\Tetris\Tetris\Screen.h(70,89): error C2143: 구문 오류: ';'이(가) '}' 앞에 없습니다.
+﻿  main.cpp
+  Tetris.vcxproj -> C:\Users\방찬웅\Desktop\Project\OOP\Tetris\Tetris\Debug\Tetris.exe

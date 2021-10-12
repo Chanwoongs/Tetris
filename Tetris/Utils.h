@@ -9,6 +9,8 @@ struct Position {
 	Position(int x = 0, int y = 0) : x(x), y(y) {}
 };
 
+typedef Position Dimension;
+
 class Borland {
 
 public:
