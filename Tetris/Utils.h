@@ -7,6 +7,17 @@ struct Position {
 	int x;
 	int y;
 	Position(int x = 0, int y = 0) : x(x), y(y) {}
+
+public:
+	bool comparePos(Position pos) {
+		if (this->x == pos.x && this->y == pos.y) {
+			return true;
+		}
+	}
+	Position addPos(Position pos) {
+		this->x += pos.x;
+		this->y += pos.y;
+	}
 };
 
 typedef Position Dimension;

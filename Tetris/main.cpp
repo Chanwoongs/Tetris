@@ -12,6 +12,7 @@
 
 class Screen;
 class Input;
+class GameManager;
 class GameObject;
 class Map;
 class Block;
@@ -132,12 +133,11 @@ Input* Input::Instance = nullptr;
 
 class GameObject {
 	Screen* screen;
-	
+	Input* input;
 public:
 	GameObject()
-		:screen(Screen::GetInstance())
+		:screen(Screen::GetInstance()), input(Input::GetInstance())
 	{
-
 	}
 	int getWidth() const {
 		return screen->getWidth();
@@ -149,59 +149,7 @@ public:
 		return screen->getSize();
 	}
 };
-
-class Map : public GameObject {
-	char* board;
-
-public:
-	Map()
-		: board(new char[getSize()])
-	{
-	}
-	~Map() {
-	}
-	Position Index2Pos(int offset) const {
-
-	}
-	int pos2Index(const Position& pos) const {
-		return (getWidth() + 1) * pos.y + pos.x; // x + 15y
-	}
-	void draw(const Position& pos, const char* shape, const Dimension& dm = Position{ 1, 1 }) {
-		int index = pos2Index(pos);
-		for (int h = 0; h < dm.y; h++)
-			strncpy(&canvas[index + (width + 1) * h], &shape[h * dm.x], dm.x);
-	}
-	void eraseLines() {
-		for (int h = 1; h < getHeight() - 1; h++) {
-			bool isFull = true;
-			isFull = checkLineFull(h);
-			if (isFull) {
-				moveBlockDown(h);
-			}
-		}
-	}
-	bool checkLineFull(int h) const {
-		for (int i = 1; i < getWidth() - 1; i++) {
-			Position pos{ i, h };
-			if (board[pos2Index(pos)] != '*') {
-				return false;
-			}
-		}
-		return true;
-	}
-	void moveBlockDown(int h) {
-		for (int i = h - 1; i > 0; i--) {
-			for (int j = 1; j < getWidth() - 1; j++)
-			{
-				Position pos2{ j, i };
-				board[pos2Index(pos2) + 15] = board[pos2Index(pos2)];
-			}
-		}
-	}
-	bool gameOver() {
-	}
-};
-
+	
 enum class Shape {
 	I = 1,
 	J = 2,
@@ -211,78 +159,84 @@ enum class Shape {
 	T = 6,
 	Z = 7 
 };
-
-class Block {
-	char shape[16];
+class Block : public GameObject {
+	char shape[20];
 	int shapeNum;
+	bool isMoving;
 	Dimension dm;
 	Position pos;
 public:
 	Block()
-		: shape{ ' ' }, shapeNum(shapeNum), dm{ 1,1 }, pos{ 0,0 }
+		: shape{ ' ' }, shapeNum(shapeNum), dm{ 1,1 }, pos{ 7,1 }, isMoving(true)
 	{
 		srand((unsigned)time(nullptr));
 		shapeNum = rand() % 7 + 1;
 	}
 	void generateRandomBlock() {
-		if (shapeNum == 1) {
-			strcpy(shape, "            ****");
-			dm = { 4,4 };
+		if (shapeNum == (int)Shape::I) {
+			strcpy(this->shape, "****");
+			this->dm = { 1,4 };
 		}
-		else if (shapeNum == 2) {
-			strcpy(shape, "*  ***");
-			dm = { 3,2 };
+		else if (shapeNum == (int)Shape::J) {
+			strcpy(this->shape, "*  ***");
+			this->dm = { 3,2 };
 		}
-		else if (shapeNum == 3) {
-			strcpy(shape, "  ****");
-			dm = { 3,2 };
+		else if (shapeNum == (int)Shape::L) {
+			strcpy(this->shape, "  ****");
+			this->dm = { 3,2 };
 		}
-		else if (shapeNum == 4) {
-			strcpy(shape, "****");
-			dm = { 2,2 };
+		else if (shapeNum == (int)Shape::O) {
+			strcpy(this->shape, "****");
+			this->dm = { 2,2 };
 		}
-		else if (shapeNum == 5) {
-			strcpy(shape, " **** ");
-			dm = { 3,2 };
+		else if (shapeNum == (int)Shape::S) {
+			strcpy(this->shape, " **** ");
+			this->dm = { 3,2 };
 		}
-		else if (shapeNum == 6) {
-			strcpy(shape, " * ***");
-			dm = { 3,2 };
+		else if (shapeNum == (int)Shape::T) {
+			strcpy(this->shape, " * ***");
+			this->dm = { 3,2 }; 
 		}
-		else if (shapeNum == 7) {
-			strcpy(shape, "**  **");
-			dm = { 3,2 };
+		else if (shapeNum == (int)Shape::Z) {
+			strcpy(this->shape, "**  **");
+			this->dm = { 3,2 };
 		}
 	}
 	void turnBlock() {
-		Dimension fourXfour{ 4,4 };
+		Dimension oneXfour{ 1,4 };
+		Dimension fourXone{ 4,1 };
 		Dimension threeXtwo{ 3,2 };
 		Dimension twoXthree{ 2,3 };
-		if (this->dm.x == fourXfour.x && this->dm.y == fourXfour.y) {
+		// 1 X 4 -> 4 X 1
+		if (dm.comparePos(oneXfour)) {
 			char temp[16] = { ' ' };
 			temp[0] = this->shape[3];
-			temp[1] = this->shape[7];
-			temp[2] = this->shape[11];
-			temp[3] = this->shape[15];
-			temp[4] = this->shape[2];
-			temp[5] = this->shape[6];
-			temp[6] = this->shape[10];
-			temp[7] = this->shape[14];
-			temp[8] = this->shape[1];
-			temp[9] = this->shape[5];
-			temp[10] = this->shape[9];
-			temp[11] = this->shape[13];
-			temp[12] = this->shape[0];
-			temp[13] = this->shape[4];
-			temp[14] = this->shape[8];
-			temp[15] = this->shape[12];
+			temp[1] = this->shape[2];
+			temp[2] = this->shape[1];
+			temp[3] = this->shape[0];
 
 			for (int i = 0; i < 15; i++)
 			{
 				this->shape[i] = temp[i];
 			}
+			this->dm = fourXone;
 		}
-		else if (this->dm.x == threeXtwo.x && this->dm.y == threeXtwo.y) {
+		// 4 X 1 -> 1 X 4
+		if (dm.comparePos(fourXone)) {
+			char temp[16] = { ' ' };
+			temp[0] = this->shape[3];
+			temp[1] = this->shape[2];
+			temp[2] = this->shape[1];
+			temp[3] = this->shape[0];
+
+			for (int i = 0; i < 15; i++)
+			{
+				this->shape[i] = temp[i];
+			}
+			this->dm = oneXfour;
+		}
+		// 3 X 2 -> 2 X 3
+		else if (dm.comparePos(threeXtwo)) {
 			char temp[16] = { ' ' };
 			temp[0] = shape[2];
 			temp[1] = shape[5];
@@ -295,8 +249,10 @@ public:
 			{
 				this->shape[i] = temp[i];
 			}
+			this->dm = twoXthree;
 		}
-		else if (this->dm.x == twoXthree.x && this->dm.y == twoXthree.y) {
+		// 2 X 3 -> 3 X 2
+		else if (dm.comparePos(twoXthree)) {
 			char temp[16] = { ' ' };
 			temp[0] = shape[1];
 			temp[1] = shape[3];
@@ -309,12 +265,149 @@ public:
 			{
 				this->shape[i] = temp[i];
 			}
+			this->dm = threeXtwo;
 		}
+	}
+	Position getPos() const {
+		return pos;
+	}
+	int getShapeNum() const {
+		return shapeNum;
+	}
+	Dimension getDimension() const {
+		return dm;
+	}
+	void setIsMoving(bool isMoving) {
+		this->isMoving = isMoving;
+	}
+	bool getIsMoving() const {
+		return isMoving;
+	}
+};
+
+class Map : public GameObject {
+	char* board;
+	int size;
+public:
+	Map()
+		: size(getSize()), board(new char[size])
+	{
+		for (int i = 15; i < 311; i += 15) {
+			board[i] = '|';
+		}
+		for (int i = 28; i < 314; i += 15) {
+			board[i] = '|';
+		}
+		for (int i = 0; i < 14; i++) {
+			board[i] = '-';
+		}
+		for (int i = 316; i < 329; i++) {
+			board[i] = '-';
+		}
+		for (int i = 14; i < 315; i += 15) {
+			board[i] = '\n';
+		}
+		board[getSize() - 1] = '\0';
+	}
+	~Map() {
+		delete[] board;
+	}
+	Position Index2Pos(int offset) const {
+
+	}
+	int pos2Index(const Position& pos) const {
+		return (getWidth() + 1) * pos.y + pos.x; // x + 15y
+	}
+	void draw(const Position& pos, const char* shape, const Dimension& dm) {
+		int index = pos2Index(pos);
+		for (int h = 0; h < dm.y; h++)
+			strncpy(&board[index], &shape[h * dm.x], dm.x);
+	}
+	void eraseLines() {
+		for (int h = 1; h < getHeight() - 1; h++) {
+			bool isFull = true;
+			isFull = checkLinesFull(h);
+			if (isFull) {
+				moveBlocksDown(h);
+			}
+		}
+	}
+	bool checkLinesFull(int h) const {
+		for (int i = 1; i < getWidth() - 1; i++) {
+			Position pos{ i, h };
+			if (board[pos2Index(pos)] != '*') {
+				return false;
+			}
+		}
+		return true;
+	}
+	void moveBlocksDown(int h) {
+		for (int i = h - 1; i > 0; i--) {
+			for (int j = 1; j < getWidth() - 1; j++)
+			{
+				Position pos2{ j, i };
+				board[pos2Index(pos2) + 15] = board[pos2Index(pos2)];
+			}
+		}
+	}
+	void freezeBlock(Block* block) {
+		// shape ㅣ
+		if (block->getShapeNum() == 1) {
+			if (board[pos2Index(block->getPos())] == '*' && board[pos2Index(block->getPos())] == ' ') {
+				block->setIsMoving(false);
+			}
+		}
+		// shape
+	}
+	void update(Block* block) {
+		eraseLines();
+		freezeBlock(block);
+	}
+	bool gameOver() {
+	}
+};
+
+class GameManager {
+	Map* map;
+	Block* activeBlock;
+	Block* nextBlock;
+	Screen* screen;
+
+	bool isFall;
+public:
+	GameManager()
+		: map(map), screen(Screen::GetInstance()), activeBlock(new Block), nextBlock(new Block), isFall(false)
+	{
+	}
+	~GameManager()
+	{
+	}
+	void update() {
+		createNewBlock();
+		map->update(activeBlock);
+	}
+	void draw() {
+
+	}
+	void createNewBlock() {
+		if (activeBlock->getIsMoving()) return;
+		activeBlock = nextBlock;
+		nextBlock = new Block;
 	}
 };
 
 int main()
 {
+	Screen* screen = Screen::GetInstance();
+	bool isLooping = true;
+
+	while (isLooping)
+	{
+		screen->clear();
+
+
+		screen->render();
+	}
 
 	return 0;
 }
