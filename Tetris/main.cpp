@@ -151,6 +151,9 @@ public:
 	int getSize() const {
 		return screen->getSize();
 	}
+	bool getKeyUp() const {
+		return input->getKey(VK_UP);
+	}
 }; 
 
 enum class Shape {
@@ -163,47 +166,55 @@ enum class Shape {
 	Z = 7
 };
 class Block : public GameObject {
-	char shape[20];
+	char* shape;
 	int shapeNum;
 	bool isMoving;
 	Dimension dm;
 	Position pos;
 public:
 	Block()
-		: shape{ ' ' }, shapeNum(shapeNum), dm{ 1,1 }, pos{ 7,1 }, isMoving(true)
+		: shapeNum(shapeNum), dm{ 1,1 }, pos{ 7,2 }, isMoving(true)
 	{
 		srand((unsigned)time(nullptr));
 		shapeNum = rand() % 7 + 1;
-	}
-	void generateRandomBlock() {
 		if (shapeNum == (int)Shape::I) {
-			strcpy(this->shape, "****");
+			shape = new char[5];
+			strncpy(this->shape, "****", sizeof("****"));
 			this->dm = { 1,4 };
 		}
 		else if (shapeNum == (int)Shape::J) {
-			strcpy(this->shape, "*  ***");
+			shape = new char[7];
+			strncpy(this->shape, "*  ***", sizeof("*  ***"));
 			this->dm = { 3,2 };
 		}
 		else if (shapeNum == (int)Shape::L) {
-			strcpy(this->shape, "  ****");
+			shape = new char[7];
+			strncpy(this->shape, "  ****", sizeof("  ****"));
 			this->dm = { 3,2 };
 		}
 		else if (shapeNum == (int)Shape::O) {
-			strcpy(this->shape, "****");
+			shape = new char[5];
+			strncpy(this->shape, "****", sizeof("****"));
 			this->dm = { 2,2 };
 		}
 		else if (shapeNum == (int)Shape::S) {
-			strcpy(this->shape, " **** ");
+			shape = new char[7];
+			strncpy(this->shape, " **** ", sizeof(" **** "));
 			this->dm = { 3,2 };
 		}
 		else if (shapeNum == (int)Shape::T) {
-			strcpy(this->shape, " * ***");
+			shape = new char[7];
+			strncpy(this->shape, " * ***", sizeof(" * ***"));
 			this->dm = { 3,2 };
 		}
 		else if (shapeNum == (int)Shape::Z) {
-			strcpy(this->shape, "**  **");
+			shape = new char[7];
+			strncpy(this->shape, "**  **", sizeof("**  **"));
 			this->dm = { 3,2 };
 		}
+	}
+	~Block() {
+		delete[] shape;
 	}
 	void turnBlock() {
 		Dimension oneXfour{ 1,4 };
@@ -212,13 +223,13 @@ public:
 		Dimension twoXthree{ 2,3 };
 		// 1 X 4 -> 4 X 1
 		if (dm.comparePos(oneXfour)) {
-			char temp[16] = { ' ' };
+			char temp[4] = { ' ' };
 			temp[0] = this->shape[3];
 			temp[1] = this->shape[2];
 			temp[2] = this->shape[1];
 			temp[3] = this->shape[0];
 
-			for (int i = 0; i < 15; i++)
+			for (int i = 0; i < 4; i++)
 			{
 				this->shape[i] = temp[i];
 			}
@@ -226,13 +237,13 @@ public:
 		}
 		// 4 X 1 -> 1 X 4
 		if (dm.comparePos(fourXone)) {
-			char temp[16] = { ' ' };
+			char temp[4] = { ' ' };
 			temp[0] = this->shape[3];
 			temp[1] = this->shape[2];
 			temp[2] = this->shape[1];
 			temp[3] = this->shape[0];
 
-			for (int i = 0; i < 15; i++)
+			for (int i = 0; i < 4; i++)
 			{
 				this->shape[i] = temp[i];
 			}
@@ -240,7 +251,7 @@ public:
 		}
 		// 3 X 2 -> 2 X 3
 		else if (dm.comparePos(threeXtwo)) {
-			char temp[16] = { ' ' };
+			char temp[6] = { ' ' };
 			temp[0] = shape[2];
 			temp[1] = shape[5];
 			temp[2] = shape[1];
@@ -256,7 +267,7 @@ public:
 		}
 		// 2 X 3 -> 3 X 2
 		else if (dm.comparePos(twoXthree)) {
-			char temp[16] = { ' ' };
+			char temp[6] = { ' ' };
 			temp[0] = shape[1];
 			temp[1] = shape[3];
 			temp[2] = shape[5];
@@ -271,14 +282,27 @@ public:
 			this->dm = threeXtwo;
 		}
 	}
-	Position getPos() const {
+	Position getPos() {
 		return pos;
+	}
+	void setPos(int x, int y) {
+		pos.x = x;
+		pos.y = y;
 	}
 	int getShapeNum() const {
 		return shapeNum;
 	}
 	Dimension getDimension() const {
 		return dm;
+	}
+	const char* getShape() const{
+		return shape;
+	}
+	const char* getEmpty4Shape() const {
+		return "    ";
+	}
+	const char* getEmpty6Shape() const {
+		return "      ";
 	}
 	void setIsMoving(bool isMoving) {
 		this->isMoving = isMoving;
@@ -292,9 +316,15 @@ public:
 class Map : public GameObject {
 	char* board;
 
+public:
 	Map()
 		: board(new char[getSize()])
 	{
+	}
+	~Map() {
+		delete[] board;
+	}
+	void initializeBoard() {
 		memset(board, ' ', getSize());
 		for (int i = 15; i < 311; i += 15) {
 			board[i] = 'l';
@@ -313,34 +343,39 @@ class Map : public GameObject {
 		}
 		board[getSize() - 1] = '\0';
 	}
-	~Map() {
-		delete[] board;
-	}
-	static Map* Instance;
-
-public:
-	static Map* GetInstance() {
-		if (Instance == nullptr) {
-			Instance = new Map;
-		}
-		return Instance;
-	}
 	Position Index2Pos(int offset) const {
 
 	}
 	char* getBoard() {
 		return board;
 	}
+	void clear() {
+		memset(board, ' ', getSize());
+	}
 	int pos2Index(const Position& pos) const {
 		return (getWidth() + 1) * pos.y + pos.x; // x + 15y
 	}
-	void draw(const Position& pos, const char* shape, const Dimension& dm) {
-		int index = pos2Index(pos);
-		for (int h = 0; h < dm.y; h++)
-			strncpy(&board[index], &shape[h * dm.x], dm.x);
-	}
 	void drawActiveBlock(Block& block) {
+		for (int h = 0; h < block.getDimension().y; h++) {
+			if (block.getDimension().comparePos(4, 1) || block.getDimension().comparePos(1, 4) || block.getDimension().comparePos(2, 2)) {
+				strncpy(&board[(pos2Index(block.getPos()) + (getWidth() + 1) * h) - 15], &block.getEmpty4Shape()[h * block.getDimension().x], block.getDimension().x);
+			}
+			else if (block.getDimension().comparePos(2, 3) || block.getDimension().comparePos(3, 2)) {
+				strncpy(&board[(pos2Index(block.getPos()) + (getWidth() + 1) * h) - 15], &block.getEmpty6Shape()[h * block.getDimension().x], block.getDimension().x);
+			}
+		}
+		for (int h = 0; h < block.getDimension().y; h++) {
+			strncpy(&board[pos2Index(block.getPos()) + (getWidth() + 1) * h], &block.getShape()[h * block.getDimension().x], block.getDimension().x);
+		}
+	}
+	void eraseAfterImage() {
+		int i = 0;
 
+		while (board[i] != '*' && (board[i] == '-' || board[i] == 'l'))
+		{
+			board[i] = ' ';
+			i++;
+		}
 	}
 	void eraseLines() {
 		for (int h = 1; h < getHeight() - 1; h++) {
@@ -371,65 +406,205 @@ public:
 	}
 	void freezeBlock(Block& block) {
 		// shape ㅣ
-		if (block.getShapeNum() == 1) {
-			if (board[pos2Index(block.getPos())] == '*' && board[pos2Index(block.getPos())] == ' ') {
+		if (block.getShapeNum() == 1 && block.getDimension().comparePos(1,4)) {
+			if (board[pos2Index(block.getPos().addPos(0,4))] != ' ') {
 				block.setIsMoving(false);
 			}
 		}
-		// shape
+		else if (block.getShapeNum() == 1 && block.getDimension().comparePos(4, 1)) {
+			if (board[pos2Index(block.getPos().addPos(0,1))] != ' ' || board[pos2Index(block.getPos().addPos(1,1))] != ' ' || board[pos2Index(block.getPos().addPos(2, 1))] != ' ' || board[pos2Index(block.getPos().addPos(3, 1))] != ' ') {
+				block.setIsMoving(false);
+			}
+		}
+		// shape J
+		else if (block.getShapeNum() == 2 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos())] == ' ') {
+			if (board[pos2Index(block.getPos().addPos(0,3))] != ' ' || board[pos2Index(block.getPos().addPos(1, 3))] != ' ')
+			{
+				block.setIsMoving(false);
+			}
+		}
+		else if (block.getShapeNum() == 2 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos())] != ' ') {
+			if (board[pos2Index(block.getPos().addPos(0,3))] != ' ' || board[pos2Index(block.getPos().addPos(1, 1))] != ' ')
+			{
+				block.setIsMoving(false);
+			}
+		}
+		else if (block.getShapeNum() == 2 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos().addPos(0,1))] == ' ') {
+			if (board[pos2Index(block.getPos().addPos(0,1))] != ' ' || board[pos2Index(block.getPos().addPos(1, 1))] != ' ' || board[pos2Index(block.getPos().addPos(2, 2))] != ' ')
+			{
+				block.setIsMoving(false);
+			}
+		}
+		else if (block.getShapeNum() == 2 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos().addPos(0, 1))] != ' ') {
+			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ' || board[pos2Index(block.getPos().addPos(2, 2))] != ' ')
+			{
+				block.setIsMoving(false);
+			}
+		}
+		// shape L
+		else if (block.getShapeNum() == 3 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos().addPos(1,0))] == ' ') {
+			if (board[pos2Index(block.getPos().addPos(0, 3))] != ' ' || board[pos2Index(block.getPos().addPos(1, 3))] != ' ')
+			{
+				block.setIsMoving(false);
+			}
+		}
+		else if (block.getShapeNum() == 3 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos().addPos(1, 0))] != ' ') {
+			if (board[pos2Index(block.getPos().addPos(0, 1))] != ' ' || board[pos2Index(block.getPos().addPos(1, 3))] != ' ')
+			{
+				block.setIsMoving(false);
+			}
+		}
+		else if (block.getShapeNum() == 3 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos())] == ' ') {
+			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ' || board[pos2Index(block.getPos().addPos(2, 2))] != ' ')
+			{
+				block.setIsMoving(false);
+			}
+		}
+		else if (block.getShapeNum() == 3 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos())] != ' ') {
+			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 1))] != ' ' || board[pos2Index(block.getPos().addPos(2, 1))] != ' ')
+			{
+				block.setIsMoving(false);
+			}
+		}
+		// shape O
+		else if (block.getShapeNum() == 4) {
+			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ')
+			{
+				block.setIsMoving(false);
+			}
+		}
+		// shape S
+		else if (block.getShapeNum() == 5 && block.getDimension().comparePos(2, 3)) {
+			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 3))] != ' ')
+			{
+				block.setIsMoving(false);
+			}
+		}
+		else if (block.getShapeNum() == 5 && block.getDimension().comparePos(3, 2)) {
+			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ' || board[pos2Index(block.getPos().addPos(2, 1))] != ' ')
+			{
+				block.setIsMoving(false);
+			}
+		}
+		// shape T
+		else if (block.getShapeNum() == 6 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos())] == ' ') {
+			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ' || board[pos2Index(block.getPos().addPos(2, 2))] != ' ')
+			{
+				block.setIsMoving(false);
+			}
+		}
+		else if (block.getShapeNum() == 6 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos())] != ' ') {
+			if (board[pos2Index(block.getPos().addPos(0, 1))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ' || board[pos2Index(block.getPos().addPos(2, 1))] != ' ')
+			{
+				block.setIsMoving(false);
+			}
+		}
+		else if (block.getShapeNum() == 6 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos().addPos(1, 0))] == ' ') {
+			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 3))] != ' ')
+			{
+				block.setIsMoving(false);
+			}
+		}
+		else if (block.getShapeNum() == 6 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos().addPos(1, 0))] != ' ') {
+			if (board[pos2Index(block.getPos().addPos(0, 3))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ')
+			{
+				block.setIsMoving(false);
+			}
+		}
+		// shape Z
+		else if (block.getShapeNum() == 7 && block.getDimension().comparePos(2, 3)) {
+			if (board[pos2Index(block.getPos().addPos(0, 3))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ')
+			{
+				block.setIsMoving(false);
+			}
+		}
+		else if (block.getShapeNum() == 7 && block.getDimension().comparePos(3, 2)) {
+			if (board[pos2Index(block.getPos().addPos(0, 1))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ' || board[pos2Index(block.getPos().addPos(2, 2))] != ' ')
+			{
+				block.setIsMoving(false);
+			}
+		}
 	}
 	void update(Block& block) {
+		drawActiveBlock(block);
+		eraseAfterImage();
 		eraseLines();
 		freezeBlock(block);
 	}
 	bool gameOver() {
 	}
 };
-Map* Map::Instance = nullptr;
 
 class GameManager {
 	Map* map;
+	Screen* screen;
+	Input* input;
 	Block* activeBlock;
 	Block* nextBlock;
-	Screen* screen;
+
+
 
 	bool isLooping;
 	bool isFall;
 public:
 	GameManager()
-		: map(Map::GetInstance()), screen(Screen::GetInstance()), activeBlock(new Block), nextBlock(new Block), isFall(false), isLooping(true)
+		: map(new Map), screen(Screen::GetInstance()),  input(Input::GetInstance()), activeBlock(new Block), nextBlock(new Block), isFall(false), isLooping(true)
 	{
 	}
 	~GameManager()
 	{
+		delete nextBlock;
+		delete activeBlock;
+		delete map;
 	}
 	void gameStart() {
+		map->initializeBoard();
+
 		while (isLooping) {
 			screen->clear();
-			//screen->draw(block);
-
+			input->readInputs();
 			update();
 			screen->draw(map);
 			screen->render();
-
+			Sleep(100);
 		}
 	}
 	void update() {
 		createNewBlock();
 		map->update(*activeBlock);
-	}
-	void draw() {
-
+		moveBlock();
 	}
 	void createNewBlock() {
 		if (activeBlock->getIsMoving()) return;
 		activeBlock = nextBlock;
 		nextBlock = new Block;
 	}
+	void moveBlock() {
+		if (!activeBlock->getIsMoving()) return;
+		activeBlock->setPos(activeBlock->getPos().x, activeBlock->getPos().y + 1);
+		if (input->getKeyUp(VK_UP)) {
+			activeBlock->turnBlock();
+		}
+		if (input->getKeyUp(VK_LEFT)) {
+			activeBlock->setPos(activeBlock->getPos().x - 1, activeBlock->getPos().y);
+		}
+		if (input->getKeyUp(VK_RIGHT)) {
+			activeBlock->setPos(activeBlock->getPos().x + 1, activeBlock->getPos().y);
+		}
+		if (input->getKeyUp(VK_DOWN)) {
+			activeBlock->turnBlock();
+		}
+		if (input->getKeyUp(VK_UP)) {
+			activeBlock->turnBlock();
+		}
+	}
 };
 
 void Screen::draw(Map* map) {
-	canvas = map->getBoard();
+	char* temp = map->getBoard();
+	for (int i = 0; i < size; i++) {
+		canvas[i] = temp[i];
+	}
 }
 
 int main()

@@ -14,9 +14,35 @@ public:
 			return true;
 		}
 	}
+	bool comparePos(int x, int y) {
+		if (this->x == x && this->y == y) {
+			return true;
+		}
+		else return false;
+	}
 	Position addPos(Position pos) {
-		this->x += pos.x;
-		this->y += pos.y;
+		Position newPos;
+		int newX = 0;
+		int newY = 0;
+		newX = this->x + pos.x;
+		newY = this->y + pos.y;
+
+		newPos = (newX, newY);
+
+		return newPos;
+	}
+	Position addPos(int x, int y) {
+		Position newPos;
+		newPos.x = this->x + x;
+		newPos.y = this->y + y;
+
+		return newPos;
+	}
+	Position operator+(Position& other) {
+		other.x += this->x;
+		other.y += this->y;
+
+		return other;
 	}
 };
 
