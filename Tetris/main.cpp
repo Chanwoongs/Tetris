@@ -12,11 +12,12 @@
 
 class Screen;
 class Input;
-class GameManager;
 class GameObject;
-class Map;
 class Block;
+class Map;
+class GameManager;
 
+//map
 class Screen {
 private:
 	int	width;
@@ -30,7 +31,7 @@ private:
 	{
 		bool faultyInput = false;
 		if (this->width <= 0) {
-			this->width = 15;
+			this->width = 14;
 			faultyInput = true;
 		}
 		if (this->height <= 0) {
@@ -69,6 +70,7 @@ public:
 	void clear() {
 		memset(canvas, ' ', size);
 	}
+	void draw(Map* map);
 	void render() {
 		Borland::gotoxy(0, 0);
 		for (int h = 0; h < height; h++)
@@ -131,6 +133,7 @@ public:
 };
 Input* Input::Instance = nullptr;
 
+//screen
 class GameObject {
 	Screen* screen;
 	Input* input;
@@ -148,8 +151,8 @@ public:
 	int getSize() const {
 		return screen->getSize();
 	}
-};
-	
+}; 
+
 enum class Shape {
 	I = 1,
 	J = 2,
@@ -157,7 +160,7 @@ enum class Shape {
 	O = 4,
 	S = 5,
 	T = 6,
-	Z = 7 
+	Z = 7
 };
 class Block : public GameObject {
 	char shape[20];
@@ -195,7 +198,7 @@ public:
 		}
 		else if (shapeNum == (int)Shape::T) {
 			strcpy(this->shape, " * ***");
-			this->dm = { 3,2 }; 
+			this->dm = { 3,2 };
 		}
 		else if (shapeNum == (int)Shape::Z) {
 			strcpy(this->shape, "**  **");
@@ -285,24 +288,25 @@ public:
 	}
 };
 
+//screen
 class Map : public GameObject {
 	char* board;
-	int size;
-public:
+
 	Map()
-		: size(getSize()), board(new char[size])
+		: board(new char[getSize()])
 	{
+		memset(board, ' ', getSize());
 		for (int i = 15; i < 311; i += 15) {
-			board[i] = '|';
+			board[i] = 'l';
 		}
 		for (int i = 28; i < 314; i += 15) {
-			board[i] = '|';
+			board[i] = 'l';
 		}
 		for (int i = 0; i < 14; i++) {
-			board[i] = '-';
+			board[i] = '=';
 		}
-		for (int i = 316; i < 329; i++) {
-			board[i] = '-';
+		for (int i = 315; i < 329; i++) {
+			board[i] = '=';
 		}
 		for (int i = 14; i < 315; i += 15) {
 			board[i] = '\n';
@@ -312,8 +316,20 @@ public:
 	~Map() {
 		delete[] board;
 	}
+	static Map* Instance;
+
+public:
+	static Map* GetInstance() {
+		if (Instance == nullptr) {
+			Instance = new Map;
+		}
+		return Instance;
+	}
 	Position Index2Pos(int offset) const {
 
+	}
+	char* getBoard() {
+		return board;
 	}
 	int pos2Index(const Position& pos) const {
 		return (getWidth() + 1) * pos.y + pos.x; // x + 15y
@@ -366,6 +382,7 @@ public:
 	bool gameOver() {
 	}
 };
+Map* Map::Instance = nullptr;
 
 class GameManager {
 	Map* map;
@@ -376,11 +393,17 @@ class GameManager {
 	bool isFall;
 public:
 	GameManager()
-		: map(map), screen(Screen::GetInstance()), activeBlock(new Block), nextBlock(new Block), isFall(false)
+		: map(Map::GetInstance()), screen(Screen::GetInstance()), activeBlock(new Block), nextBlock(new Block), isFall(false)
 	{
 	}
 	~GameManager()
 	{
+	}
+	void gameStart() {
+		screen->clear();
+		screen->draw(map);
+		update();
+		screen->render();
 	}
 	void update() {
 		createNewBlock();
@@ -396,19 +419,14 @@ public:
 	}
 };
 
+void Screen::draw(Map* map) {
+	canvas = map->getBoard();
+}
+
 int main()
 {
-	Screen* screen = Screen::GetInstance();
-	bool isLooping = true;
-
-	while (isLooping)
-	{
-		screen->clear();
-
-
-		screen->render();
-	}
-
+	GameManager gm;
+	gm.gameStart();
 	return 0;
 }
 
