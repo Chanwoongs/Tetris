@@ -339,6 +339,9 @@ public:
 		for (int h = 0; h < dm.y; h++)
 			strncpy(&board[index], &shape[h * dm.x], dm.x);
 	}
+	void drawActiveBlock(Block& block) {
+
+	}
 	void eraseLines() {
 		for (int h = 1; h < getHeight() - 1; h++) {
 			bool isFull = true;
@@ -366,16 +369,16 @@ public:
 			}
 		}
 	}
-	void freezeBlock(Block* block) {
+	void freezeBlock(Block& block) {
 		// shape ㅣ
-		if (block->getShapeNum() == 1) {
-			if (board[pos2Index(block->getPos())] == '*' && board[pos2Index(block->getPos())] == ' ') {
-				block->setIsMoving(false);
+		if (block.getShapeNum() == 1) {
+			if (board[pos2Index(block.getPos())] == '*' && board[pos2Index(block.getPos())] == ' ') {
+				block.setIsMoving(false);
 			}
 		}
 		// shape
 	}
-	void update(Block* block) {
+	void update(Block& block) {
 		eraseLines();
 		freezeBlock(block);
 	}
@@ -390,24 +393,30 @@ class GameManager {
 	Block* nextBlock;
 	Screen* screen;
 
+	bool isLooping;
 	bool isFall;
 public:
 	GameManager()
-		: map(Map::GetInstance()), screen(Screen::GetInstance()), activeBlock(new Block), nextBlock(new Block), isFall(false)
+		: map(Map::GetInstance()), screen(Screen::GetInstance()), activeBlock(new Block), nextBlock(new Block), isFall(false), isLooping(true)
 	{
 	}
 	~GameManager()
 	{
 	}
 	void gameStart() {
-		screen->clear();
-		screen->draw(map);
-		update();
-		screen->render();
+		while (isLooping) {
+			screen->clear();
+			//screen->draw(block);
+
+			update();
+			screen->draw(map);
+			screen->render();
+
+		}
 	}
 	void update() {
 		createNewBlock();
-		map->update(activeBlock);
+		map->update(*activeBlock);
 	}
 	void draw() {
 
