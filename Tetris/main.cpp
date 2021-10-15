@@ -187,6 +187,7 @@ class Block : public GameObject {
 	bool isMoving;
 	Dimension dm;
 	Position pos;
+
 public:
 	Block() /// pos 수정 screen 값/ 2로
 		: shape(shape), shapeNum(shapeNum), dm{ 1,1 }, pos{ getWidth() / 2,2 }, isMoving(true)
@@ -337,14 +338,6 @@ public:
 		return shape;
 	}
 
-	const char* getEmpty4Shape() const {
-		return "    ";
-	}
-
-	const char* getEmpty6Shape() const {
-		return "      ";
-	}
-	// setMovingFlag -> setMovingFlag
 	void setMovingFlag(bool isMoving) {
 		this->isMoving = isMoving;
 	}
@@ -411,38 +404,41 @@ public:
 
 	// ActiveBlock 그리기
 	void drawBlock(Block& block) {
-		// \0 전까지만 그린다
-		for (int h = 0; h < block.getDimension().y; h++) 
+		if (block.getIsMoving()) 
 		{
-			strncpy(&board[pos2Index(block.getPos()) + (getWidth() + 1) * h], &block.getShape()[h * block.getDimension().x], block.getDimension().x);
+			// \0 전까지만 그린다
+			for (int h = 0; h < block.getDimension().y; h++)
+			{
+				strncpy(&board[pos2Index(block.getPos()) + (getWidth() + 1) * h], &block.getShape()[h * block.getDimension().x], block.getDimension().x);
+			}
 		}
 	}
 
 	// board에 남아있는 Block 그리기
-	void drawFixedBlocks(vector<Block> fixedBlocks) {
+	void drawFixedBlocks(vector<Block*> &fixedBlocks) {
 		//매니저에서 고정 블럭들의 shape 받아서 draw
-		vector<Block>::iterator it;
-		for(it = fixedBlocks.begin(); it != fixedBlocks.end(); it++)
+		vector<Block*>::iterator it;
+		for(it = fixedBlocks.begin(); it != fixedBlocks.end() && !fixedBlocks.empty(); it++)
 		{
 			// 비어있는 블록을 fixedBlocks 에서 지운다 
-			// Shape I, O
-			if ((it->getDimension().comparePos(1,4) || it->getDimension().comparePos(4, 1) || it->getDimension().comparePos(2, 2)) && it->getShape() == "    ")
+			// Shape I, O // *it == Block*
+			if (((*it)->getDimension().comparePos(1, 4) || (*it)->getDimension().comparePos(4, 1) || (*it)->getDimension().comparePos(2, 2)) && ((*it)->getShape() == "    "))
 			{
 				fixedBlocks.erase(it);
 				continue;
 			}
 
 			// Shape J, L, S, T, Z
-			else if ((it->getDimension().comparePos(2, 3) || it->getDimension().comparePos(3, 21)) && it->getShape() == "      ")
+			else if (((*it)->getDimension().comparePos(2, 3) || (*it)->getDimension().comparePos(3, 21)) && (*it)->getShape() == "      ")
 			{
 				fixedBlocks.erase(it);
 				continue;
 			}
 
 			// 남아있는 블럭 그리기
-			for (int h = 0; h < it->getDimension().y; h++)
+			for (int h = 0; h < (*it)->getDimension().y; h++)
 			{
-				strncpy(&board[pos2Index(it->getPos()) + (getWidth() + 1) * h], &it->getShape()[h * it->getDimension().x], it->getDimension().x);
+				strncpy(&board[pos2Index((*it)->getPos()) + (getWidth() + 1) * h], &((*it)->getShape()[h * (*it)->getDimension().x]), (*it)->getDimension().x);
 			}
 		} 
 	}
@@ -614,7 +610,7 @@ public:
 		}
 	}
 
-	void update(Block& block, vector<Block> fixedBlocks)
+	void update(Block& block, vector<Block*>& fixedBlocks)
 	{
 		initializeBoard();
 		drawFixedBlocks(fixedBlocks);
@@ -634,10 +630,11 @@ class GameManager {
 	Input* input;
 	Block* activeBlock;
 	Block* nextBlock;
-	vector<Block> fixedBlocks; // isMoving == false 일때 fixedBlocks.push_back(activeBlock) for문으로 돌려서 if "      " 빈칸이라면 fixedBlocks.erase()
+	vector<Block*> fixedBlocks; 
 
 	bool isLooping;
 	bool isFall;
+
 public:
 	GameManager()
 		: map(new Map), screen(Screen::GetInstance()),  input(Input::GetInstance()), activeBlock(new Block), nextBlock(new Block), isFall(false), isLooping(true)
@@ -655,7 +652,7 @@ public:
 		map->initializeBoard();
 
 		while (isLooping) {
-			screen->clear();
+ 			screen->clear();
 			input->readInputs();
 			update();
 			screen->draw(map);
@@ -675,7 +672,7 @@ public:
 		if (activeBlock->getIsMoving()) return;
 
 		// 떨어진 블럭 정보 저장
-		fixedBlocks.push_back(*activeBlock);
+		fixedBlocks.push_back(activeBlock);
 
 		// 다음 블록 미리보기
 		activeBlock = nextBlock;
@@ -712,7 +709,22 @@ void Input::errorExit(const char* lpszMessage)
 	ExitProcess(0);
 }
 bool Input::getKeyDown(WORD virtualKeyCode) {
-	return getKey(virtualKeyCode);
+	if (cNumRead == 0) return false; // 현재 콘솔에서 읽은 갯수가 0이냐?
+
+	for (int i = 0; i < cNumRead; i++)
+	{
+		bool b = false;
+		if (irInBuf[i].EventType != KEY_EVENT) continue;
+
+		if (!b)	{
+			if (irInBuf[i].Event.KeyEvent.wVirtualKeyCode == virtualKeyCode && irInBuf[i].Event.KeyEvent.bKeyDown == TRUE) {
+				b = true;
+				return true;
+			}
+		}
+		
+		return false;
+	}
 }
 bool Input::getKey(WORD virtualKeyCode) {
 	if (cNumRead == 0) return false; // 현재 콘솔에서 읽은 갯수가 0이냐?
