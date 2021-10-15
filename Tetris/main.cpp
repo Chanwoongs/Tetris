@@ -8,7 +8,10 @@
 #include <cstdlib>
 #include <string> 
 #include <Windows.h>
+#include <vector>
 #include "Utils.h"
+
+using namespace std;
 
 class Screen;
 class Input;
@@ -25,7 +28,6 @@ private:
 	int	size;
 	char* canvas;
 
-	// constructor (생성자 함수) 메모리공간상에 적재되는 순간 호출되는
 	Screen(int width = 14, int height = 22) // boundary |                |'\n' 12 + 2 + 1, 20 + 2
 		: width(width), height(height), canvas(new char[(width + 1) * height])
 	{
@@ -44,7 +46,6 @@ private:
 			canvas = new char[size];
 		}
 	}
-	// destructor (소멸자 함수) 메모리공간상에서 없어지는 순간 호출되는 함수
 	virtual ~Screen() {
 		delete[] canvas;
 		canvas = nullptr;
@@ -58,19 +59,26 @@ public:
 		}
 		return Instance;
 	}
+
 	int getWidth() const {
 		return width;
 	}
+
 	int getHeight() const {
 		return height;
 	}
+
 	int getSize() const {
 		return size;
 	}
+
 	void clear() {
 		memset(canvas, ' ', size);
 	}
+
 	void draw(Map* map);
+
+	// 화면 출력
 	void render() {
 		Borland::gotoxy(0, 0);
 		for (int h = 0; h < height; h++)
@@ -92,14 +100,18 @@ class Input {
 
 	Input()	{
 		hStdin = GetStdHandle(STD_INPUT_HANDLE);
+
 		if (hStdin == INVALID_HANDLE_VALUE)
 			errorExit("GetStdHandle");
+
 		if (!GetConsoleMode(hStdin, &fdwSaveOldMode))
 			errorExit("GetConsoleMode");
 		fdwMode = ENABLE_EXTENDED_FLAGS;
+
 		if (!SetConsoleMode(hStdin, fdwMode))
 			errorExit("SetConsoleMode");
 		fdwMode = ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
+
 		if (!SetConsoleMode(hStdin, fdwMode))
 			errorExit("SetConsoleMode");
 	}
@@ -113,11 +125,15 @@ public:
 		}
 		return Instance;
 	}
+
+	// Input 받기
 	void readInputs() {
-		if (!GetNumberOfConsoleInputEvents(hStdin, &cNumRead)) {
+		if (!GetNumberOfConsoleInputEvents(hStdin, &cNumRead))
+		{
 			cNumRead = 0;
 			return;
 		}
+
 		if (cNumRead == 0) return;
 
 		if (!ReadConsoleInput(
@@ -133,26 +149,26 @@ public:
 };
 Input* Input::Instance = nullptr;
 
-//screen
 class GameObject {
+protected:
 	Screen* screen;
-	Input* input;
+
 public:
 	GameObject()
-		:screen(Screen::GetInstance()), input(Input::GetInstance())
+		:screen(Screen::GetInstance())
 	{
 	}
+
 	int getWidth() const {
 		return screen->getWidth();
 	}
+
 	int getHeight() const {
 		return screen->getHeight();
 	}
+
 	int getSize() const {
 		return screen->getSize();
-	}
-	bool getKeyUp() const {
-		return input->getKey(VK_UP);
 	}
 }; 
 
@@ -172,41 +188,52 @@ class Block : public GameObject {
 	Dimension dm;
 	Position pos;
 public:
-	Block()
-		: shapeNum(shapeNum), dm{ 1,1 }, pos{ 7,2 }, isMoving(true)
+	Block() /// pos 수정 screen 값/ 2로
+		: shape(shape), shapeNum(shapeNum), dm{ 1,1 }, pos{ 7,2 }, isMoving(true)
 	{
 		srand((unsigned)time(nullptr));
+
+		// shape 랜덤 선정
 		shapeNum = rand() % 7 + 1;
+
+		// shape과 dm 초기화
+		// I Block
 		if (shapeNum == (int)Shape::I) {
 			shape = new char[5];
 			strncpy(this->shape, "****", sizeof("****"));
 			this->dm = { 1,4 };
 		}
+		// J Block
 		else if (shapeNum == (int)Shape::J) {
 			shape = new char[7];
 			strncpy(this->shape, "*  ***", sizeof("*  ***"));
 			this->dm = { 3,2 };
 		}
+		// L Block
 		else if (shapeNum == (int)Shape::L) {
 			shape = new char[7];
 			strncpy(this->shape, "  ****", sizeof("  ****"));
 			this->dm = { 3,2 };
 		}
+		// O Block
 		else if (shapeNum == (int)Shape::O) {
 			shape = new char[5];
 			strncpy(this->shape, "****", sizeof("****"));
 			this->dm = { 2,2 };
 		}
+		// S Block
 		else if (shapeNum == (int)Shape::S) {
 			shape = new char[7];
 			strncpy(this->shape, " **** ", sizeof(" **** "));
 			this->dm = { 3,2 };
 		}
+		// T Block
 		else if (shapeNum == (int)Shape::T) {
 			shape = new char[7];
 			strncpy(this->shape, " * ***", sizeof(" * ***"));
 			this->dm = { 3,2 };
 		}
+		// Z Block
 		else if (shapeNum == (int)Shape::Z) {
 			shape = new char[7];
 			strncpy(this->shape, "**  **", sizeof("**  **"));
@@ -216,13 +243,16 @@ public:
 	~Block() {
 		delete[] shape;
 	}
+
+	// 블럭 반시계 방향으로 돌리기
 	void turnBlock() {
 		Dimension oneXfour{ 1,4 };
 		Dimension fourXone{ 4,1 };
 		Dimension threeXtwo{ 3,2 };
 		Dimension twoXthree{ 2,3 };
 		// 1 X 4 -> 4 X 1
-		if (dm.comparePos(oneXfour)) {
+		if (dm.comparePos(oneXfour)) 
+		{
 			char temp[4] = { ' ' };
 			temp[0] = this->shape[3];
 			temp[1] = this->shape[2];
@@ -236,7 +266,8 @@ public:
 			this->dm = fourXone;
 		}
 		// 4 X 1 -> 1 X 4
-		if (dm.comparePos(fourXone)) {
+		if (dm.comparePos(fourXone)) 
+		{
 			char temp[4] = { ' ' };
 			temp[0] = this->shape[3];
 			temp[1] = this->shape[2];
@@ -250,7 +281,8 @@ public:
 			this->dm = oneXfour;
 		}
 		// 3 X 2 -> 2 X 3
-		else if (dm.comparePos(threeXtwo)) {
+		else if (dm.comparePos(threeXtwo)) 
+		{
 			char temp[6] = { ' ' };
 			temp[0] = shape[2];
 			temp[1] = shape[5];
@@ -266,7 +298,8 @@ public:
 			this->dm = twoXthree;
 		}
 		// 2 X 3 -> 3 X 2
-		else if (dm.comparePos(twoXthree)) {
+		else if (dm.comparePos(twoXthree)) 
+		{
 			char temp[6] = { ' ' };
 			temp[0] = shape[1];
 			temp[1] = shape[3];
@@ -282,31 +315,40 @@ public:
 			this->dm = threeXtwo;
 		}
 	}
+
 	Position getPos() {
 		return pos;
 	}
+
 	void setPos(int x, int y) {
 		pos.x = x;
 		pos.y = y;
 	}
+
 	int getShapeNum() const {
 		return shapeNum;
 	}
+
 	Dimension getDimension() const {
 		return dm;
 	}
+
 	const char* getShape() const{
 		return shape;
 	}
+
 	const char* getEmpty4Shape() const {
 		return "    ";
 	}
+
 	const char* getEmpty6Shape() const {
 		return "      ";
 	}
-	void setIsMoving(bool isMoving) {
+	// setMovingFlag -> setMovingFlag
+	void setMovingFlag(bool isMoving) {
 		this->isMoving = isMoving;
 	}
+
 	bool getIsMoving() const {
 		return isMoving;
 	}
@@ -324,78 +366,95 @@ public:
 	~Map() {
 		delete[] board;
 	}
-	void initializeBoard() {
+
+	// 보드 초기화
+	void initializeBoard() 
+	{
 		memset(board, ' ', getSize());
-		for (int i = 15; i < 311; i += 15) {
+
+		for (int i = 15; i < 311; i += 15) 
+		{
 			board[i] = 'l';
 		}
-		for (int i = 28; i < 314; i += 15) {
+		for (int i = 28; i < 314; i += 15) 
+		{
 			board[i] = 'l';
 		}
-		for (int i = 0; i < 14; i++) {
+		for (int i = 0; i < 14; i++) 
+		{
 			board[i] = '=';
 		}
-		for (int i = 315; i < 329; i++) {
+		for (int i = 315; i < 329; i++) 
+		{
 			board[i] = '=';
 		}
-		for (int i = 14; i < 315; i += 15) {
+		for (int i = 14; i < 315; i += 15) 
+		{
 			board[i] = '\n';
 		}
 		board[getSize() - 1] = '\0';
 	}
+
 	Position Index2Pos(int offset) const {
 
 	}
+
 	char* getBoard() {
 		return board;
 	}
+
 	void clear() {
 		memset(board, ' ', getSize());
 	}
-	int pos2Index(const Position& pos) const {
+
+	// Position을 Index로 변환
+	int pos2Index(const Position& pos) const 
+	{
 		return (getWidth() + 1) * pos.y + pos.x; // x + 15y
 	}
-	void drawActiveBlock(Block& block) {
-		for (int h = 0; h < block.getDimension().y; h++) {
-			if (block.getDimension().comparePos(4, 1) || block.getDimension().comparePos(1, 4) || block.getDimension().comparePos(2, 2)) {
-				strncpy(&board[(pos2Index(block.getPos()) + (getWidth() + 1) * h) - 15], &block.getEmpty4Shape()[h * block.getDimension().x], block.getDimension().x);
-			}
-			else if (block.getDimension().comparePos(2, 3) || block.getDimension().comparePos(3, 2)) {
-				strncpy(&board[(pos2Index(block.getPos()) + (getWidth() + 1) * h) - 15], &block.getEmpty6Shape()[h * block.getDimension().x], block.getDimension().x);
-			}
-		}
-		for (int h = 0; h < block.getDimension().y; h++) {
+
+	// ActiveBlock 그리기
+	void drawBlock(Block& block) {
+		// \0 전까지만 그린다
+		for (int h = 0; h < block.getDimension().y; h++) 
+		{
 			strncpy(&board[pos2Index(block.getPos()) + (getWidth() + 1) * h], &block.getShape()[h * block.getDimension().x], block.getDimension().x);
 		}
 	}
-	void eraseAfterImage() {
-		int i = 0;
 
-		while (board[i] != '*' && (board[i] == '-' || board[i] == 'l'))
+	// 줄 지우기
+	void eraseLines() 
+	{
+		for (int h = 1; h < getHeight() - 1; h++) 
 		{
-			board[i] = ' ';
-			i++;
-		}
-	}
-	void eraseLines() {
-		for (int h = 1; h < getHeight() - 1; h++) {
 			bool isFull = true;
 			isFull = checkLinesFull(h);
-			if (isFull) {
+
+			if (isFull) 
+			{
 				moveBlocksDown(h);
 			}
 		}
 	}
-	bool checkLinesFull(int h) const {
-		for (int i = 1; i < getWidth() - 1; i++) {
+
+	// 줄이 다 찼는지 확인
+	bool checkLinesFull(int h) const
+	{
+		for (int i = 1; i < getWidth() - 1; i++) 
+		{
 			Position pos{ i, h };
-			if (board[pos2Index(pos)] != '*') {
+
+			if (board[pos2Index(pos)] != '*') 
+			{
 				return false;
 			}
 		}
 		return true;
 	}
-	void moveBlocksDown(int h) {
+
+	// 윗 라인들 아래로 당기기
+	void moveBlocksDown(int h) 
+	{
 		for (int i = h - 1; i > 0; i--) {
 			for (int j = 1; j < getWidth() - 1; j++)
 			{
@@ -404,133 +463,151 @@ public:
 			}
 		}
 	}
+
+	// 블럭 멈추기
 	void freezeBlock(Block& block) {
 		// shape ㅣ
 		if (block.getShapeNum() == 1 && block.getDimension().comparePos(1,4)) {
 			if (board[pos2Index(block.getPos().addPos(0,4))] != ' ') {
-				block.setIsMoving(false);
+				block.setMovingFlag(false);
 			}
 		}
 		else if (block.getShapeNum() == 1 && block.getDimension().comparePos(4, 1)) {
 			if (board[pos2Index(block.getPos().addPos(0,1))] != ' ' || board[pos2Index(block.getPos().addPos(1,1))] != ' ' || board[pos2Index(block.getPos().addPos(2, 1))] != ' ' || board[pos2Index(block.getPos().addPos(3, 1))] != ' ') {
-				block.setIsMoving(false);
+				block.setMovingFlag(false);
 			}
 		}
 		// shape J
 		else if (block.getShapeNum() == 2 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos())] == ' ') {
 			if (board[pos2Index(block.getPos().addPos(0,3))] != ' ' || board[pos2Index(block.getPos().addPos(1, 3))] != ' ')
 			{
-				block.setIsMoving(false);
+				block.setMovingFlag(false);
 			}
 		}
 		else if (block.getShapeNum() == 2 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos())] != ' ') {
 			if (board[pos2Index(block.getPos().addPos(0,3))] != ' ' || board[pos2Index(block.getPos().addPos(1, 1))] != ' ')
 			{
-				block.setIsMoving(false);
+				block.setMovingFlag(false);
 			}
 		}
 		else if (block.getShapeNum() == 2 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos().addPos(0,1))] == ' ') {
 			if (board[pos2Index(block.getPos().addPos(0,1))] != ' ' || board[pos2Index(block.getPos().addPos(1, 1))] != ' ' || board[pos2Index(block.getPos().addPos(2, 2))] != ' ')
 			{
-				block.setIsMoving(false);
+				block.setMovingFlag(false);
 			}
 		}
 		else if (block.getShapeNum() == 2 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos().addPos(0, 1))] != ' ') {
 			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ' || board[pos2Index(block.getPos().addPos(2, 2))] != ' ')
 			{
-				block.setIsMoving(false);
+				block.setMovingFlag(false);
 			}
 		}
 		// shape L
 		else if (block.getShapeNum() == 3 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos().addPos(1,0))] == ' ') {
 			if (board[pos2Index(block.getPos().addPos(0, 3))] != ' ' || board[pos2Index(block.getPos().addPos(1, 3))] != ' ')
 			{
-				block.setIsMoving(false);
+				block.setMovingFlag(false);
 			}
 		}
 		else if (block.getShapeNum() == 3 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos().addPos(1, 0))] != ' ') {
 			if (board[pos2Index(block.getPos().addPos(0, 1))] != ' ' || board[pos2Index(block.getPos().addPos(1, 3))] != ' ')
 			{
-				block.setIsMoving(false);
+				block.setMovingFlag(false);
 			}
 		}
 		else if (block.getShapeNum() == 3 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos())] == ' ') {
 			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ' || board[pos2Index(block.getPos().addPos(2, 2))] != ' ')
 			{
-				block.setIsMoving(false);
+				block.setMovingFlag(false);
 			}
 		}
 		else if (block.getShapeNum() == 3 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos())] != ' ') {
 			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 1))] != ' ' || board[pos2Index(block.getPos().addPos(2, 1))] != ' ')
 			{
-				block.setIsMoving(false);
+				block.setMovingFlag(false);
 			}
 		}
 		// shape O
 		else if (block.getShapeNum() == 4) {
 			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ')
 			{
-				block.setIsMoving(false);
+				block.setMovingFlag(false);
 			}
 		}
 		// shape S
 		else if (block.getShapeNum() == 5 && block.getDimension().comparePos(2, 3)) {
 			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 3))] != ' ')
 			{
-				block.setIsMoving(false);
+				block.setMovingFlag(false);
 			}
 		}
 		else if (block.getShapeNum() == 5 && block.getDimension().comparePos(3, 2)) {
 			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ' || board[pos2Index(block.getPos().addPos(2, 1))] != ' ')
 			{
-				block.setIsMoving(false);
+				block.setMovingFlag(false);
 			}
 		}
 		// shape T
 		else if (block.getShapeNum() == 6 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos())] == ' ') {
 			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ' || board[pos2Index(block.getPos().addPos(2, 2))] != ' ')
 			{
-				block.setIsMoving(false);
+				block.setMovingFlag(false);
 			}
 		}
 		else if (block.getShapeNum() == 6 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos())] != ' ') {
 			if (board[pos2Index(block.getPos().addPos(0, 1))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ' || board[pos2Index(block.getPos().addPos(2, 1))] != ' ')
 			{
-				block.setIsMoving(false);
+				block.setMovingFlag(false);
 			}
 		}
 		else if (block.getShapeNum() == 6 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos().addPos(1, 0))] == ' ') {
 			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 3))] != ' ')
 			{
-				block.setIsMoving(false);
+				block.setMovingFlag(false);
 			}
 		}
 		else if (block.getShapeNum() == 6 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos().addPos(1, 0))] != ' ') {
 			if (board[pos2Index(block.getPos().addPos(0, 3))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ')
 			{
-				block.setIsMoving(false);
+				block.setMovingFlag(false);
 			}
 		}
 		// shape Z
 		else if (block.getShapeNum() == 7 && block.getDimension().comparePos(2, 3)) {
 			if (board[pos2Index(block.getPos().addPos(0, 3))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ')
 			{
-				block.setIsMoving(false);
+				block.setMovingFlag(false);
 			}
 		}
 		else if (block.getShapeNum() == 7 && block.getDimension().comparePos(3, 2)) {
 			if (board[pos2Index(block.getPos().addPos(0, 1))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ' || board[pos2Index(block.getPos().addPos(2, 2))] != ' ')
 			{
-				block.setIsMoving(false);
+				block.setMovingFlag(false);
 			}
 		}
 	}
-	void update(Block& block) {
-		drawActiveBlock(block);
-		eraseAfterImage();
-		eraseLines();
-		freezeBlock(block);
+
+	void update(Block& block) 
+	{
+		//clear()		// 화면 지워주기
+		// 안움직이는 블럭 draw
+		//매니저에서 고정 블럭들의 shape 받아서 draw
+		// for(int i = 0; i < vector.size(); i++ )
+		// {
+		//		if(fixedBlocks[i].getShape() == dm"   "
+		//		{
+		//			fixedBlocks.erase(i);
+		//			continue;
+		//		}
+		//		draw(fixedBlocks[i]);
+		// } 
+		// pos 계산 == 충돌 체크
+		drawBlock(block); // activeBlock draw
+		//eraseLines();
+		//freezeBlock(block);
 	}
+
+	// 게임 오버
 	bool gameOver() {
 	}
 };
@@ -541,8 +618,7 @@ class GameManager {
 	Input* input;
 	Block* activeBlock;
 	Block* nextBlock;
-
-
+	vector<Block> fixedBlocks; // isMoving == false 일때 fixedBlocks.push_back(activeBlock) for문으로 돌려서 if "      " 빈칸이라면 fixedBlocks.erase()
 
 	bool isLooping;
 	bool isFall;
@@ -557,6 +633,8 @@ public:
 		delete activeBlock;
 		delete map;
 	}
+
+	// 게임 시작
 	void gameStart() {
 		map->initializeBoard();
 
@@ -566,21 +644,29 @@ public:
 			update();
 			screen->draw(map);
 			screen->render();
-			Sleep(100);
+			Sleep(1000);
 		}
 	}
+
 	void update() {
 		createNewBlock();
 		map->update(*activeBlock);
 		moveBlock();
 	}
+
+	// 새로운 블럭 생성 함수
 	void createNewBlock() {
 		if (activeBlock->getIsMoving()) return;
+
+		// 다음 블록 미리보기
 		activeBlock = nextBlock;
 		nextBlock = new Block;
 	}
+
+	// 블럭 움직임
 	void moveBlock() {
 		if (!activeBlock->getIsMoving()) return;
+
 		activeBlock->setPos(activeBlock->getPos().x, activeBlock->getPos().y + 1);
 		if (input->getKeyUp(VK_UP)) {
 			activeBlock->turnBlock();
@@ -591,15 +677,10 @@ public:
 		if (input->getKeyUp(VK_RIGHT)) {
 			activeBlock->setPos(activeBlock->getPos().x + 1, activeBlock->getPos().y);
 		}
-		if (input->getKeyUp(VK_DOWN)) {
-			activeBlock->turnBlock();
-		}
-		if (input->getKeyUp(VK_UP)) {
-			activeBlock->turnBlock();
-		}
 	}
 };
 
+// 보드 스크린으로 가져오기
 void Screen::draw(Map* map) {
 	char* temp = map->getBoard();
 	for (int i = 0; i < size; i++) {
