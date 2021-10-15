@@ -189,7 +189,7 @@ class Block : public GameObject {
 	Position pos;
 public:
 	Block() /// pos 수정 screen 값/ 2로
-		: shape(shape), shapeNum(shapeNum), dm{ 1,1 }, pos{ 7,2 }, isMoving(true)
+		: shape(shape), shapeNum(shapeNum), dm{ 1,1 }, pos{ getWidth() / 2,2 }, isMoving(true)
 	{
 		srand((unsigned)time(nullptr));
 
@@ -403,10 +403,6 @@ public:
 		return board;
 	}
 
-	void clear() {
-		memset(board, ' ', getSize());
-	}
-
 	// Position을 Index로 변환
 	int pos2Index(const Position& pos) const 
 	{
@@ -422,16 +418,47 @@ public:
 		}
 	}
 
+	// board에 남아있는 Block 그리기
+	void drawFixedBlocks(vector<Block> fixedBlocks) {
+		//매니저에서 고정 블럭들의 shape 받아서 draw
+		vector<Block>::iterator it;
+		for(it = fixedBlocks.begin(); it != fixedBlocks.end(); it++)
+		{
+			// 비어있는 블록을 fixedBlocks 에서 지운다 
+			// Shape I, O
+			if ((it->getDimension().comparePos(1,4) || it->getDimension().comparePos(4, 1) || it->getDimension().comparePos(2, 2)) && it->getShape() == "    ")
+			{
+				fixedBlocks.erase(it);
+				continue;
+			}
+
+			// Shape J, L, S, T, Z
+			else if ((it->getDimension().comparePos(2, 3) || it->getDimension().comparePos(3, 21)) && it->getShape() == "      ")
+			{
+				fixedBlocks.erase(it);
+				continue;
+			}
+
+			// 남아있는 블럭 그리기
+			for (int h = 0; h < it->getDimension().y; h++)
+			{
+				strncpy(&board[pos2Index(it->getPos()) + (getWidth() + 1) * h], &it->getShape()[h * it->getDimension().x], it->getDimension().x);
+			}
+		} 
+	}
+
 	// 줄 지우기
 	void eraseLines() 
 	{
 		for (int h = 1; h < getHeight() - 1; h++) 
 		{
 			bool isFull = true;
+			// 줄이 다 찼는지 확인
 			isFull = checkLinesFull(h);
 
 			if (isFull) 
 			{
+				// 윗 라인 모두 아래로 내리기
 				moveBlocksDown(h);
 			}
 		}
@@ -452,7 +479,7 @@ public:
 		return true;
 	}
 
-	// 윗 라인들 아래로 당기기
+	// 윗 라인 모두 아래로 내리기
 	void moveBlocksDown(int h) 
 	{
 		for (int i = h - 1; i > 0; i--) {
@@ -587,24 +614,13 @@ public:
 		}
 	}
 
-	void update(Block& block) 
+	void update(Block& block, vector<Block> fixedBlocks)
 	{
-		//clear()		// 화면 지워주기
-		// 안움직이는 블럭 draw
-		//매니저에서 고정 블럭들의 shape 받아서 draw
-		// for(int i = 0; i < vector.size(); i++ )
-		// {
-		//		if(fixedBlocks[i].getShape() == dm"   "
-		//		{
-		//			fixedBlocks.erase(i);
-		//			continue;
-		//		}
-		//		draw(fixedBlocks[i]);
-		// } 
-		// pos 계산 == 충돌 체크
+		initializeBoard();
+		drawFixedBlocks(fixedBlocks);
 		drawBlock(block); // activeBlock draw
 		//eraseLines();
-		//freezeBlock(block);
+		freezeBlock(block);
 	}
 
 	// 게임 오버
@@ -644,19 +660,22 @@ public:
 			update();
 			screen->draw(map);
 			screen->render();
-			Sleep(1000);
+			Sleep(100);
 		}
 	}
 
 	void update() {
 		createNewBlock();
-		map->update(*activeBlock);
+		map->update(*activeBlock, fixedBlocks);
 		moveBlock();
 	}
 
 	// 새로운 블럭 생성 함수
 	void createNewBlock() {
 		if (activeBlock->getIsMoving()) return;
+
+		// 떨어진 블럭 정보 저장
+		fixedBlocks.push_back(*activeBlock);
 
 		// 다음 블록 미리보기
 		activeBlock = nextBlock;
@@ -668,15 +687,6 @@ public:
 		if (!activeBlock->getIsMoving()) return;
 
 		activeBlock->setPos(activeBlock->getPos().x, activeBlock->getPos().y + 1);
-		if (input->getKeyUp(VK_UP)) {
-			activeBlock->turnBlock();
-		}
-		if (input->getKeyUp(VK_LEFT)) {
-			activeBlock->setPos(activeBlock->getPos().x - 1, activeBlock->getPos().y);
-		}
-		if (input->getKeyUp(VK_RIGHT)) {
-			activeBlock->setPos(activeBlock->getPos().x + 1, activeBlock->getPos().y);
-		}
 	}
 };
 
