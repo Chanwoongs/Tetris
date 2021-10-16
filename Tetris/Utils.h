@@ -44,6 +44,10 @@ public:
 
 		return other;
 	}
+	void setPos(Position pos) {
+		this->x = pos.x;
+		this->y = pos.y;
+	}
 };
 
 typedef Position Dimension;

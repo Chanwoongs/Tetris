@@ -76,6 +76,12 @@ public:
 		memset(canvas, ' ', size);
 	}
 
+	// Position을 Index로 변환
+	int pos2Index(const Position& pos) const
+	{
+		return (getWidth() + 1) * pos.y + pos.x; // x + 15y
+	}
+
 	void draw(Map* map);
 
 	// 화면 출력
@@ -170,6 +176,10 @@ public:
 	int getSize() const {
 		return screen->getSize();
 	}
+
+	int pos2Index(Position pos) {
+		return screen->pos2Index(pos);
+	}
 }; 
 
 enum class Shape {
@@ -190,7 +200,7 @@ class Block : public GameObject {
 
 public:
 	Block() /// pos 수정 screen 값/ 2로
-		: shape(shape), shapeNum(shapeNum), dm{ 1,1 }, pos{ getWidth() / 2,2 }, isMoving(true)
+		: shape(shape), shapeNum(shapeNum), dm(4, 4), pos{ getWidth() / 2 , 0 }, isMoving(true)
 	{
 		srand((unsigned)time(nullptr));
 
@@ -201,44 +211,44 @@ public:
 		// I Block
 		if (shapeNum == (int)Shape::I) {
 			shape = new char[5];
-			strncpy(this->shape, "****", sizeof("****"));
-			this->dm = { 1,4 };
+			strncpy(shape, "****", sizeof("****"));
+			dm = { 1,4 };
 		}
 		// J Block
 		else if (shapeNum == (int)Shape::J) {
 			shape = new char[7];
-			strncpy(this->shape, "*  ***", sizeof("*  ***"));
-			this->dm = { 3,2 };
+			strncpy(shape, "*  ***", sizeof("*  ***"));
+			dm = { 3,2 };
 		}
 		// L Block
 		else if (shapeNum == (int)Shape::L) {
 			shape = new char[7];
-			strncpy(this->shape, "  ****", sizeof("  ****"));
-			this->dm = { 3,2 };
+			strncpy(shape, "  ****", sizeof("  ****"));
+			dm = { 3,2 };
 		}
 		// O Block
 		else if (shapeNum == (int)Shape::O) {
 			shape = new char[5];
 			strncpy(this->shape, "****", sizeof("****"));
-			this->dm = { 2,2 };
+			dm = { 2,2 };
 		}
 		// S Block
 		else if (shapeNum == (int)Shape::S) {
 			shape = new char[7];
-			strncpy(this->shape, " **** ", sizeof(" **** "));
-			this->dm = { 3,2 };
+			strncpy(shape, " **** ", sizeof(" **** "));
+			dm = { 3,2 };
 		}
 		// T Block
 		else if (shapeNum == (int)Shape::T) {
 			shape = new char[7];
-			strncpy(this->shape, " * ***", sizeof(" * ***"));
-			this->dm = { 3,2 };
+			strncpy(shape, " * ***", sizeof(" * ***"));
+			dm = { 3,2 };
 		}
 		// Z Block
 		else if (shapeNum == (int)Shape::Z) {
 			shape = new char[7];
-			strncpy(this->shape, "**  **", sizeof("**  **"));
-			this->dm = { 3,2 };
+			strncpy(shape, "**  **", sizeof("**  **"));
+			dm = { 3,2 };
 		}
 	}
 	~Block() {
@@ -247,59 +257,55 @@ public:
 
 	// 블럭 반시계 방향으로 돌리기
 	void turnBlock() {
-		Dimension oneXfour{ 1,4 };
-		Dimension fourXone{ 4,1 };
-		Dimension threeXtwo{ 3,2 };
-		Dimension twoXthree{ 2,3 };
 		// 1 X 4 -> 4 X 1
-		if (dm.comparePos(oneXfour)) 
+		if (dm.comparePos(1, 4))
 		{
 			char temp[4] = { ' ' };
-			temp[0] = this->shape[3];
-			temp[1] = this->shape[2];
-			temp[2] = this->shape[1];
-			temp[3] = this->shape[0];
+			temp[0] = shape[0];
+			temp[1] = shape[1];
+			temp[2] = shape[2];
+			temp[3] = shape[3];
 
 			for (int i = 0; i < 4; i++)
 			{
-				this->shape[i] = temp[i];
+				shape[i] = temp[i];
 			}
-			this->dm = fourXone;
+			dm.addPos(3, -3);
 		}
 		// 4 X 1 -> 1 X 4
-		if (dm.comparePos(fourXone)) 
+		if (dm.comparePos(4, 1)) 
 		{
 			char temp[4] = { ' ' };
-			temp[0] = this->shape[3];
-			temp[1] = this->shape[2];
-			temp[2] = this->shape[1];
-			temp[3] = this->shape[0];
+			temp[0] = shape[3];
+			temp[1] = shape[2];
+			temp[2] = shape[1];
+			temp[3] = shape[0];
 
 			for (int i = 0; i < 4; i++)
 			{
-				this->shape[i] = temp[i];
+				shape[i] = temp[i];
 			}
-			this->dm = oneXfour;
+			dm.addPos(-3, 3);
 		}
 		// 3 X 2 -> 2 X 3
-		else if (dm.comparePos(threeXtwo)) 
+		if (dm.comparePos(3, 2)) 
 		{
 			char temp[6] = { ' ' };
 			temp[0] = shape[2];
 			temp[1] = shape[5];
-			temp[2] = shape[1];
+			temp[2] = shape[4];
 			temp[3] = shape[4];
 			temp[4] = shape[0];
 			temp[5] = shape[3];
 
 			for (int i = 0; i < 6; i++)
 			{
-				this->shape[i] = temp[i];
+				shape[i] = temp[i];
 			}
-			this->dm = twoXthree;
+			dm.addPos(-1, 1);
 		}
 		// 2 X 3 -> 3 X 2
-		else if (dm.comparePos(twoXthree)) 
+		if (dm.comparePos(2, 3)) 
 		{
 			char temp[6] = { ' ' };
 			temp[0] = shape[1];
@@ -311,9 +317,9 @@ public:
 
 			for (int i = 0; i < 6; i++)
 			{
-				this->shape[i] = temp[i];
-			}
-			this->dm = threeXtwo;
+				shape[i] = temp[i];
+			}	
+			dm.addPos(1, -1);
 		}
 	}
 
@@ -330,12 +336,20 @@ public:
 		return shapeNum;
 	}
 
+	int getBlockIndex() {
+		return pos2Index(pos);
+	}
+
 	Dimension getDimension() const {
 		return dm;
 	}
 
 	const char* getShape() const{
 		return shape;
+	}
+
+	void setShape(int i, char c) {
+		shape[i] = c;
 	}
 
 	void setMovingFlag(bool isMoving) {
@@ -367,19 +381,19 @@ public:
 
 		for (int i = 15; i < 311; i += 15) 
 		{
-			board[i] = 'l';
+			board[i] = '@';
 		}
 		for (int i = 28; i < 314; i += 15) 
 		{
-			board[i] = 'l';
+			board[i] = '@';
 		}
 		for (int i = 0; i < 14; i++) 
 		{
-			board[i] = '=';
+			board[i] = '@';
 		}
 		for (int i = 315; i < 329; i++) 
 		{
-			board[i] = '=';
+			board[i] = '@';
 		}
 		for (int i = 14; i < 315; i += 15) 
 		{
@@ -396,20 +410,102 @@ public:
 		return board;
 	}
 
-	// Position을 Index로 변환
-	int pos2Index(const Position& pos) const 
-	{
-		return (getWidth() + 1) * pos.y + pos.x; // x + 15y
-	}
-
 	// ActiveBlock 그리기
 	void drawBlock(Block& block) {
 		if (block.getIsMoving()) 
 		{
-			// \0 전까지만 그린다
-			for (int h = 0; h < block.getDimension().y; h++)
+			// 빈칸 구분 없이 \0 전까지만 그린다
+			if ((block.getShapeNum() == 1 && block.getDimension().comparePos(1, 4)) || (block.getShapeNum() == 1 && block.getDimension().comparePos(4, 1)) ||
+				(block.getShapeNum() == 2 && block.getDimension().comparePos(2, 3) && block.getShape()[0] == ' ') ||
+				(block.getShapeNum() == 2 && block.getDimension().comparePos(3, 2) && block.getShape()[0] != ' ') ||
+				(block.getShapeNum() == 3 && block.getDimension().comparePos(2, 3) && block.getShape()[0] != ' ') ||
+				(block.getShapeNum() == 3 && block.getDimension().comparePos(3, 2) && block.getShape()[0] == ' ') ||
+				(block.getShapeNum() == 4) ||
+				(block.getShapeNum() == 6 && block.getDimension().comparePos(3, 2) && block.getShape()[0] == ' '))
 			{
-				strncpy(&board[pos2Index(block.getPos()) + (getWidth() + 1) * h], &block.getShape()[h * block.getDimension().x], block.getDimension().x);
+				for (int h = 0; h < block.getDimension().y; h++)
+				{
+					strncpy(&board[pos2Index(block.getPos()) + (getWidth() + 1) * h], &block.getShape()[h * block.getDimension().x], block.getDimension().x);
+				}
+			}
+			
+			// 빈칸은 그리지 않고 \0 전까지만 그린다
+			if (block.getShapeNum() == 2 && block.getDimension().comparePos(3, 2))
+			{
+				board[block.getBlockIndex()] = block.getShape()[0];
+				board[block.getBlockIndex() + 1] = block.getShape()[1];
+				board[block.getBlockIndex() + 2] = block.getShape()[2];
+				board[block.getBlockIndex() + 17] = block.getShape()[5];
+			}
+			if (block.getShapeNum() == 2 && block.getDimension().comparePos(2, 3))
+			{
+				board[block.getBlockIndex()] = block.getShape()[0];
+				board[block.getBlockIndex() + 1] = block.getShape()[1];
+				board[block.getBlockIndex() + 15] = block.getShape()[2];
+				board[block.getBlockIndex() + 30] = block.getShape()[4];
+			}
+			if (block.getShapeNum() == 3 && block.getDimension().comparePos(3, 2))
+			{
+				board[block.getBlockIndex()] = block.getShape()[0];
+				board[block.getBlockIndex() + 1] = block.getShape()[1];
+				board[block.getBlockIndex() + 2] = block.getShape()[2];
+				board[block.getBlockIndex() + 17] = block.getShape()[5];
+			}
+			if (block.getShapeNum() == 3 && block.getDimension().comparePos(2, 3))
+			{
+				board[block.getBlockIndex()] = block.getShape()[0];
+				board[block.getBlockIndex() + 1] = block.getShape()[1];
+				board[block.getBlockIndex() + 16] = block.getShape()[3];
+				board[block.getBlockIndex() + 31] = block.getShape()[5];
+			}
+			if (block.getShapeNum() == 5 && block.getDimension().comparePos(3, 2))
+			{
+				board[block.getBlockIndex() + 1] = block.getShape()[1];
+				board[block.getBlockIndex() + 2] = block.getShape()[2];
+				board[block.getBlockIndex() + 15] = block.getShape()[3];
+				board[block.getBlockIndex() + 16] = block.getShape()[4];
+			}
+			if (block.getShapeNum() == 5 && block.getDimension().comparePos(2, 3))
+			{
+				board[block.getBlockIndex()] = block.getShape()[0];
+				board[block.getBlockIndex() + 15] = block.getShape()[2];
+				board[block.getBlockIndex() + 16] = block.getShape()[3];
+				board[block.getBlockIndex() + 31] = block.getShape()[5];
+			}
+			if (block.getShapeNum() == 6 && block.getDimension().comparePos(3, 2))
+			{
+				board[block.getBlockIndex()] = block.getShape()[0];
+				board[block.getBlockIndex() + 1] = block.getShape()[1];
+				board[block.getBlockIndex() + 2] = block.getShape()[2];
+				board[block.getBlockIndex() + 16] = block.getShape()[4];
+			}
+			if (block.getShapeNum() == 6 && block.getDimension().comparePos(2, 3) && block.getShape()[0] == ' ')
+			{
+				board[block.getBlockIndex() + 1] = block.getShape()[1];
+				board[block.getBlockIndex() + 15] = block.getShape()[2];
+				board[block.getBlockIndex() + 16] = block.getShape()[3];
+				board[block.getBlockIndex() + 31] = block.getShape()[5];
+			}
+			if (block.getShapeNum() == 6 && block.getDimension().comparePos(2, 3) && block.getShape()[0] != ' ')
+			{
+				board[block.getBlockIndex()] = block.getShape()[0];
+				board[block.getBlockIndex() + 15] = block.getShape()[2];
+				board[block.getBlockIndex() + 16] = block.getShape()[3];
+				board[block.getBlockIndex() + 30] = block.getShape()[4];
+			}
+			if (block.getShapeNum() == 7 && block.getDimension().comparePos(3, 2))
+			{
+				board[block.getBlockIndex()] = block.getShape()[0];
+				board[block.getBlockIndex() + 1] = block.getShape()[1];
+				board[block.getBlockIndex() + 16] = block.getShape()[4];
+				board[block.getBlockIndex() + 17] = block.getShape()[5];
+			}
+			if (block.getShapeNum() == 7 && block.getDimension().comparePos(2, 3))
+			{
+				board[block.getBlockIndex() + 1] = block.getShape()[1];
+				board[block.getBlockIndex() + 15] = block.getShape()[2];
+				board[block.getBlockIndex() + 16] = block.getShape()[3];
+				board[block.getBlockIndex() + 30] = block.getShape()[4];
 			}
 		}
 	}
@@ -436,9 +532,95 @@ public:
 			}
 
 			// 남아있는 블럭 그리기
-			for (int h = 0; h < (*it)->getDimension().y; h++)
+			if (((*it)->getShapeNum() == 1 && (*it)->getDimension().comparePos(1, 4)) || ((*it)->getShapeNum() == 1 && (*it)->getDimension().comparePos(4, 1)) ||
+				((*it)->getShapeNum() == 2 && (*it)->getDimension().comparePos(2, 3) && (*it)->getShape()[0] == ' ') ||
+				((*it)->getShapeNum() == 2 && (*it)->getDimension().comparePos(3, 2) && (*it)->getShape()[0] != ' ') ||
+				((*it)->getShapeNum() == 3 && (*it)->getDimension().comparePos(2, 3) && (*it)->getShape()[0] != ' ') ||
+				((*it)->getShapeNum() == 3 && (*it)->getDimension().comparePos(3, 2) && (*it)->getShape()[0] == ' ') ||
+				((*it)->getShapeNum() == 4) ||
+				((*it)->getShapeNum() == 6 && (*it)->getDimension().comparePos(3, 2) && (*it)->getShape()[0] == ' '))
 			{
-				strncpy(&board[pos2Index((*it)->getPos()) + (getWidth() + 1) * h], &((*it)->getShape()[h * (*it)->getDimension().x]), (*it)->getDimension().x);
+				for (int h = 0; h < (*it)->getDimension().y; h++)
+				{
+					strncpy(&board[pos2Index((*it)->getPos()) + (getWidth() + 1) * h], &((*it)->getShape()[h * (*it)->getDimension().x]), (*it)->getDimension().x);
+				}
+			}
+			if ((*it)->getShapeNum() == 2 && (*it)->getDimension().comparePos(3, 2))
+			{
+				board[(*it)->getBlockIndex()] = (*it)->getShape()[0];
+				board[(*it)->getBlockIndex() + 1] = (*it)->getShape()[1];
+				board[(*it)->getBlockIndex() + 2] = (*it)->getShape()[2];
+				board[(*it)->getBlockIndex() + 17] = (*it)->getShape()[5];
+			}
+			if ((*it)->getShapeNum() == 2 && (*it)->getDimension().comparePos(2, 3))
+			{
+				board[(*it)->getBlockIndex()] = (*it)->getShape()[0];
+				board[(*it)->getBlockIndex() + 1] = (*it)->getShape()[1];
+				board[(*it)->getBlockIndex() + 15] = (*it)->getShape()[2];
+				board[(*it)->getBlockIndex() + 30] = (*it)->getShape()[4];
+			}
+			if ((*it)->getShapeNum() == 3 && (*it)->getDimension().comparePos(3, 2))
+			{
+				board[(*it)->getBlockIndex()] = (*it)->getShape()[0];
+				board[(*it)->getBlockIndex() + 1] = (*it)->getShape()[1];
+				board[(*it)->getBlockIndex() + 2] = (*it)->getShape()[2];
+				board[(*it)->getBlockIndex() + 17] = (*it)->getShape()[5];
+			}
+			if ((*it)->getShapeNum() == 3 && (*it)->getDimension().comparePos(2, 3))
+			{
+				board[(*it)->getBlockIndex()] = (*it)->getShape()[0];
+				board[(*it)->getBlockIndex() + 1] = (*it)->getShape()[1];
+				board[(*it)->getBlockIndex() + 16] = (*it)->getShape()[3];
+				board[(*it)->getBlockIndex() + 31] = (*it)->getShape()[5];
+			}
+			if ((*it)->getShapeNum() == 5 && (*it)->getDimension().comparePos(3, 2))
+			{
+				board[(*it)->getBlockIndex() + 1] = (*it)->getShape()[1];
+				board[(*it)->getBlockIndex() + 2] = (*it)->getShape()[2];
+				board[(*it)->getBlockIndex() + 15] = (*it)->getShape()[3];
+				board[(*it)->getBlockIndex() + 16] = (*it)->getShape()[4];
+			}
+			if ((*it)->getShapeNum() == 5 && (*it)->getDimension().comparePos(2, 3))
+			{
+				board[(*it)->getBlockIndex()] = (*it)->getShape()[0];
+				board[(*it)->getBlockIndex() + 15] = (*it)->getShape()[2];
+				board[(*it)->getBlockIndex() + 16] = (*it)->getShape()[3];
+				board[(*it)->getBlockIndex() + 31] = (*it)->getShape()[5];
+			}
+			if ((*it)->getShapeNum() == 6 && (*it)->getDimension().comparePos(3, 2))
+			{
+				board[(*it)->getBlockIndex()] = (*it)->getShape()[0];
+				board[(*it)->getBlockIndex() + 1] = (*it)->getShape()[1];
+				board[(*it)->getBlockIndex() + 2] = (*it)->getShape()[2];
+				board[(*it)->getBlockIndex() + 16] = (*it)->getShape()[4];
+			}
+			if ((*it)->getShapeNum() == 6 && (*it)->getDimension().comparePos(2, 3) && (*it)->getShape()[0] == ' ')
+			{
+				board[(*it)->getBlockIndex() + 1] = (*it)->getShape()[1];
+				board[(*it)->getBlockIndex() + 15] = (*it)->getShape()[2];
+				board[(*it)->getBlockIndex() + 16] = (*it)->getShape()[3];
+				board[(*it)->getBlockIndex() + 31] = (*it)->getShape()[5];
+			}
+			if ((*it)->getShapeNum() == 6 && (*it)->getDimension().comparePos(2, 3) && (*it)->getShape()[0] != ' ')
+			{
+				board[(*it)->getBlockIndex()] = (*it)->getShape()[0];
+				board[(*it)->getBlockIndex() + 15] = (*it)->getShape()[2];
+				board[(*it)->getBlockIndex() + 16] = (*it)->getShape()[3];
+				board[(*it)->getBlockIndex() + 30] = (*it)->getShape()[4];
+			}
+			if ((*it)->getShapeNum() == 7 && (*it)->getDimension().comparePos(3, 2))
+			{
+				board[(*it)->getBlockIndex()] = (*it)->getShape()[0];
+				board[(*it)->getBlockIndex() + 1] = (*it)->getShape()[1];
+				board[(*it)->getBlockIndex() + 16] = (*it)->getShape()[4];
+				board[(*it)->getBlockIndex() + 17] = (*it)->getShape()[5];
+			}
+			if ((*it)->getShapeNum() == 7 && (*it)->getDimension().comparePos(2, 3))
+			{
+				board[(*it)->getBlockIndex() + 1] = (*it)->getShape()[1];
+				board[(*it)->getBlockIndex() + 15] = (*it)->getShape()[2];
+				board[(*it)->getBlockIndex() + 16] = (*it)->getShape()[3];
+				board[(*it)->getBlockIndex() + 30] = (*it)->getShape()[4];
 			}
 		} 
 	}
@@ -467,7 +649,7 @@ public:
 		{
 			Position pos{ i, h };
 
-			if (board[pos2Index(pos)] != '*') 
+			if (board[screen->pos2Index(pos)] != '*')
 			{
 				return false;
 			}
@@ -610,17 +792,44 @@ public:
 		}
 	}
 
+	// 블럭 공백 채우기
+	void fillBlank(Block& block) {
+		for (int i = 0; i < strlen(block.getShape()); i++)
+		{
+			if (block.getShape()[i] == ' ' && board[pos2Index(block.getPos()) + 15] == '*')
+			{
+				block.setShape(i, '*');
+			}
+		}
+	}
+
 	void update(Block& block, vector<Block*>& fixedBlocks)
 	{
 		initializeBoard();
 		drawFixedBlocks(fixedBlocks);
 		drawBlock(block); // activeBlock draw
-		//eraseLines();
+		eraseLines();
 		freezeBlock(block);
 	}
+};
 
-	// 게임 오버
-	bool gameOver() {
+class UI : GameObject {
+	char* scoreBoard;
+	char* previewBoard;
+	int score;
+	
+public:
+	UI()
+		: score(0), scoreBoard(new char[]),
+	{
+
+	}
+	
+	void showScore() {
+
+	}
+	void showNextBlock() {
+
 	}
 };
 
@@ -653,17 +862,22 @@ public:
 
 		while (isLooping) {
  			screen->clear();
+			screen->draw(map);
 			input->readInputs();
 			update();
-			screen->draw(map);
-			screen->render();
-			Sleep(100);
+ 			screen->render();
+			Sleep(300);
 		}
 	}
 
 	void update() {
-		createNewBlock();
+		if (isGameOver(fixedBlocks)) {
+			isLooping = false;
+			Borland::gotoxy(screen->getWidth() + 5, screen->getHeight() - 10);
+			printf("GAME OVER");
+		}
 		map->update(*activeBlock, fixedBlocks);
+		createNewBlock();
 		moveBlock();
 	}
 
@@ -683,9 +897,118 @@ public:
 	void moveBlock() {
 		if (!activeBlock->getIsMoving()) return;
 
+		// 블럭 한칸씩 밑으로 움직임
 		activeBlock->setPos(activeBlock->getPos().x, activeBlock->getPos().y + 1);
+
+		// 키입력
+		if (input->getKeyUp(VK_UP))
+		{
+			//activeBlock->turnBlock();
+		}
+
+		if (input->getKey(VK_LEFT))
+		{
+			if (checkLeftCollision()) return;
+			activeBlock->setPos(activeBlock->getPos().x - 1, activeBlock->getPos().y);
+		}
+
+		if (input->getKey(VK_RIGHT))
+		{
+			if (checkRightCollision()) return;
+			activeBlock->setPos(activeBlock->getPos().x + 1, activeBlock->getPos().y);
+		}
+	}
+
+	// 왼쪽 벽 충돌 처리
+	bool checkLeftCollision() 
+	{
+		// Dimension (4, 1) 
+		if (activeBlock->getDimension().comparePos(1, 4)) {
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos()) - 1] != ' ') return true;
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 1)) - 1] != ' ') return true;
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 2)) - 1] != ' ') return true;
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 3)) - 1] != ' ') return true;
+		}
+
+		// Dimension (1, 4)
+		if (activeBlock->getDimension().comparePos(4, 1)) {
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos()) - 1] != ' ') return true;
+		}
+
+		// Dimension (2, 2)
+		if (activeBlock->getDimension().comparePos(2, 2)) {
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos()) - 1] != ' ') return true;
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 1)) - 1] != ' ') return true;
+		}
+
+		// Dimension (3, 2)
+		if (activeBlock->getDimension().comparePos(3, 2)) {
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos()) - 1] != ' ') return true;
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 1)) - 1] != ' ') return true;
+		}
+
+		// Dimension (2, 3)
+		if (activeBlock->getDimension().comparePos(2, 3)) {
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos()) - 1] != ' ') return true;
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 1)) - 1] != ' ') return true;
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 2)) - 1] != ' ') return true;
+		}
+
+		else return false;
+	}
+
+	// 오른쪽 벽 충돌 처리
+	bool checkRightCollision()
+	{
+		// Dimension (4, 1) 
+		if (activeBlock->getDimension().comparePos(1, 4)) {
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos()) + 1] != ' ') return true;
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 1)) + 1] != ' ') return true;
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 2)) + 1] != ' ') return true;
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 3)) + 1] != ' ') return true;
+		}
+
+		// Dimension (1, 4)
+		if (activeBlock->getDimension().comparePos(4, 1)) {
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(3, 0)) + 1] != ' ') return true;
+		}
+
+		// Dimension (2, 2)
+		if (activeBlock->getDimension().comparePos(2, 2)) {
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(1, 0)) + 1] != ' ') return true;
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(1, 1)) + 1] != ' ') return true;
+		}
+
+		// Dimension (3, 2)
+		if (activeBlock->getDimension().comparePos(3, 2)) {
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(2, 0)) + 1] != ' ') return true;
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(2, 1)) + 1] != ' ') return true;
+		}
+
+		// Dimension (2, 3)
+		if (activeBlock->getDimension().comparePos(2, 3)) {
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(1, 0)) + 1] != ' ') return true;
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(1, 1)) + 1] != ' ') return true;
+			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(1, 2)) + 1] != ' ') return true;
+		}
+
+		else return false;
+	}
+
+	// 게임 오버 조건 확인
+	bool isGameOver(vector<Block*>& fixedBlocks) 
+	{
+		vector<Block*>::iterator it;
+		for (it = fixedBlocks.begin(); it != fixedBlocks.end() && !fixedBlocks.empty(); it++)
+		{
+			if ((*it)->getPos().y <= 1) {
+				return true;
+			}
+		}
+		return false;
 	}
 };
+
 
 // 보드 스크린으로 가져오기
 void Screen::draw(Map* map) {
@@ -709,22 +1032,7 @@ void Input::errorExit(const char* lpszMessage)
 	ExitProcess(0);
 }
 bool Input::getKeyDown(WORD virtualKeyCode) {
-	if (cNumRead == 0) return false; // 현재 콘솔에서 읽은 갯수가 0이냐?
-
-	for (int i = 0; i < cNumRead; i++)
-	{
-		bool b = false;
-		if (irInBuf[i].EventType != KEY_EVENT) continue;
-
-		if (!b)	{
-			if (irInBuf[i].Event.KeyEvent.wVirtualKeyCode == virtualKeyCode && irInBuf[i].Event.KeyEvent.bKeyDown == TRUE) {
-				b = true;
-				return true;
-			}
-		}
-		
-		return false;
-	}
+	return false;
 }
 bool Input::getKey(WORD virtualKeyCode) {
 	if (cNumRead == 0) return false; // 현재 콘솔에서 읽은 갯수가 0이냐?
