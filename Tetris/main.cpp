@@ -413,7 +413,7 @@ public:
 		{
 			board[i] = '\n';
 		}
-		board[getSize() - 1] = '\0';
+		board[getSize() - 1] = '\0';	
 	}
 
 	Position Index2Pos(int offset) const {
@@ -525,14 +525,10 @@ public:
 	}
 
 	// board에 남아있는 Block 그리기
-	void drawFixedBlocks(vector<Block*> &fixedBlocks) {
-		for (int i = 315; i < 329; i++)
-		{
-			board[i] = '@';
-		}
+	void drawFixedBlocks(vector<Block*>& fixedBlocks) {
 		//매니저에서 고정 블럭들의 shape 받아서 draw
 		vector<Block*>::iterator it;
-		for(it = fixedBlocks.begin(); it != fixedBlocks.end() && !fixedBlocks.empty(); it++)
+		for (it = fixedBlocks.begin(); it != fixedBlocks.end() && !fixedBlocks.empty(); it++)
 		{
 			// 비어있는 블록을 fixedBlocks 에서 지운다 
 			// Shape I, O // *it == Block*
@@ -641,6 +637,34 @@ public:
 				board[(*it)->getBlockIndex() + 30] = (*it)->getShape()[4];
 			}
 		}
+
+		/*for (int h = 1; h < screen->getHeight(); h++)
+		{
+		// 줄이 다 찼는지 확인
+		bool isFull = true;
+		for (int i = 1; i < screen->getWidth() - 1; i++)
+		{
+			Position pos{ i, h };
+
+			if (board[screen->pos2Index(pos)] != '*')
+			{
+				isFull = false;
+			}
+		}
+		if (isFull)
+		{
+			// 윗 라인 모두 아래로 내리기
+			for (int i = h - 1; i > 0; i--) {
+				for (int j = 1; j < screen->getWidth() - 1; j++)
+				{
+					Position pos2{ j, i };
+					board[screen->pos2Index(pos2) + 15] = board[screen->pos2Index(pos2)];
+				}
+			}
+		}
+		else continue;
+		}*/
+
 		/*for (int h = 1; h < screen->getHeight(); h++)
 		{
 			// 줄이 다 찼는지 확인
@@ -654,20 +678,105 @@ public:
 					isFull = false;
 				}
 			}
+			// 한 줄이 다 채워 졌다면 fixedBlocks 에서 해당 줄에 있는 칸을 빈칸으로 표시
 			if (isFull)
 			{
-				// 윗 라인 모두 아래로 내리기
-				for (int i = h - 1; i > 0; i--) {
-					for (int j = 1; j < screen->getWidth() - 1; j++)
+				for (it = fixedBlocks.begin(); it != fixedBlocks.end() && !fixedBlocks.empty(); it++)
+				{
+					// Dimension (4, 1)
+					if ((*it)->getDimension().comparePos(4, 1))
 					{
-						Position pos2{ j, i };
-						board[screen->pos2Index(pos2) + 15] = board[screen->pos2Index(pos2)];
+						if ((*it)->getPos().y == h)
+						{
+							(*it)->setShape(0, board[pos2Index((*it)->getPos().addPos(0, -1))]);
+							(*it)->setShape(1, board[pos2Index((*it)->getPos().addPos(1, -1))]);
+							(*it)->setShape(2, board[pos2Index((*it)->getPos().addPos(2, -1))]);
+							(*it)->setShape(3, board[pos2Index((*it)->getPos().addPos(3, -1))]);
+						}
 					}
+					// Dimension (1, 4)
+					if ((*it)->getDimension().comparePos(1, 4))
+					{
+						if ((*it)->getPos().y == h)
+						{
+							(*it)->setShape(0, board[pos2Index((*it)->getPos().addPos(0, -1))]);
+						}
+						if ((*it)->getPos().addPos(0, 1).y == h)
+						{
+							(*it)->setShape(1, board[pos2Index((*it)->getPos())]);
+							(*it)->setShape(0, board[pos2Index((*it)->getPos().addPos(0, -1))]);
+						}
+						if ((*it)->getPos().addPos(0, 2).y == h)
+						{
+							(*it)->setShape(2, board[pos2Index((*it)->getPos().addPos(0, 1))]);
+							(*it)->setShape(1, board[pos2Index((*it)->getPos())]);
+							(*it)->setShape(0, board[pos2Index((*it)->getPos().addPos(0, -1))]);
+						}
+						if ((*it)->getPos().addPos(0, 3).y == h)
+						{
+							(*it)->setShape(3, board[pos2Index((*it)->getPos().addPos(0, 2))]);
+							(*it)->setShape(2, board[pos2Index((*it)->getPos().addPos(0, 1))]);
+							(*it)->setShape(1, board[pos2Index((*it)->getPos())]);
+							(*it)->setShape(0, board[pos2Index((*it)->getPos().addPos(0, -1))]);
+						}
+
+					}
+					// Dimension (3, 2)
+					if ((*it)->getDimension().comparePos(3, 2))
+					{
+						if ((*it)->getPos().y == h)
+						{
+							(*it)->setShape(0, board[pos2Index((*it)->getPos().addPos(0, -1))]);
+							(*it)->setShape(1, board[pos2Index((*it)->getPos().addPos(1, -1))]);
+							(*it)->setShape(2, board[pos2Index((*it)->getPos().addPos(2, -1))]);
+						}
+						if ((*it)->getPos().addPos(0, 1).y == h)
+						{
+							(*it)->setShape(3, board[pos2Index((*it)->getPos())]);
+							(*it)->setShape(4, board[pos2Index((*it)->getPos().addPos(1, 0))]);
+							(*it)->setShape(5, board[pos2Index((*it)->getPos().addPos(2, 0))]);
+						}
+					}
+					// Dimension (2, 3)
+					if ((*it)->getDimension().comparePos(2, 3))
+					{
+						if ((*it)->getPos().y == h)
+						{
+							(*it)->setShape(0, board[pos2Index((*it)->getPos().addPos(0, -1))]);
+							(*it)->setShape(1, board[pos2Index((*it)->getPos().addPos(1, -1))]);
+						}
+						if ((*it)->getPos().addPos(0, 1).y == h)
+						{
+							(*it)->setShape(2, board[pos2Index((*it)->getPos())]);
+							(*it)->setShape(3, board[pos2Index((*it)->getPos().addPos(1, 0))]);
+						}
+						if ((*it)->getPos().addPos(0, 1).y == h)
+						{
+							(*it)->setShape(4, board[pos2Index((*it)->getPos().addPos(0, 1))]);
+							(*it)->setShape(5, board[pos2Index((*it)->getPos().addPos(1, 1))]);
+						}
+					}
+					// Dimension (2, 2)
+					if ((*it)->getDimension().comparePos(2, 2))
+					{
+						if ((*it)->getPos().y == h)
+						{
+							(*it)->setShape(0, board[pos2Index((*it)->getPos().addPos(0, -1))]);
+							(*it)->setShape(1, board[pos2Index((*it)->getPos().addPos(1, -1))]);
+						}
+						if ((*it)->getPos().addPos(0, 1).y == h)
+						{
+							(*it)->setShape(2, board[pos2Index((*it)->getPos())]);
+							(*it)->setShape(3, board[pos2Index((*it)->getPos().addPos(1, 0))]);
+						}
+					}
+					(*it)->setPos((*it)->getPos().x, (*it)->getPos().addPos(0, 1).y);
 				}
 			}
 			else continue;
 		}*/
-		for (int h = 1; h < screen->getHeight(); h++)
+
+		/*for (int h = 1; h < screen->getHeight(); h++)
 		{
 			// 줄이 다 찼는지 확인
 			bool isFull = true;
@@ -743,7 +852,7 @@ public:
 						}
 					}
 					// Dimension (2, 2)
-					if ((*it)->getDimension().comparePos(2, 2)) 
+					if ((*it)->getDimension().comparePos(2, 2))
 					{
 						if ((*it)->getPos().y == h)
 						{
@@ -757,13 +866,12 @@ public:
 						}
 					}
 					(*it)->setPos((*it)->getPos().x, (*it)->getPos().addPos(0, 1).y);
-					
 				}
 			}
 			else continue;
 		}
+	*/
 	}
-
 	// 블럭 멈추기
 	void freezeBlock(Block& block) {
 		// shape ㅣ
@@ -901,8 +1009,8 @@ protected:
 	Position pos;
 	char* uIBoard;
 public:
-	UI(const Position& pos, char* uIBoard)
-		: pos(pos), uIBoard(uIBoard)
+	UI()
+		: pos({ 0, 0 }), uIBoard(nullptr)
 	{
 
 	}
@@ -923,7 +1031,7 @@ class ScoreUI : public UI {
 
 public:
 	ScoreUI()
-		: scoreText{" "}, linesText{" "}, speedText{" "}, UI({0, 0}, uIBoard)
+		: scoreText{" "}, linesText{" "}, speedText{" "}
 	{
 		this->pos.x = screen->getWidth() + 2;
 		this->pos.y = screen->getHeight() - 21;
@@ -999,9 +1107,10 @@ class GameManager {
 
 public:
 	GameManager()
-		: map(new Map), screen(Screen::GetInstance()),  input(Input::GetInstance()), activeBlock(new Block), nextBlock(new Block), //scoreUI(scoreUI), 
+		: map(new Map), screen(Screen::GetInstance()),  input(Input::GetInstance()), activeBlock(new Block), nextBlock(new Block), 
 		isFall(false), isLooping(true), score(0), lines(0), speed(1000)
 	{
+		ScoreUI scoreUI;
 	}
 	~GameManager()
 	{
@@ -1030,8 +1139,8 @@ public:
 			Borland::gotoxy(screen->getWidth() + 5, screen->getHeight() - 10);
 			printf("GAME OVER");
 		}*/
-		//scoreUI.drawScoreUI(score, lines, speed);
-		//scoreUI.printUI(scoreUI.getPos(), scoreUI.getScoreUI());
+		scoreUI.drawScoreUI(score, lines, speed);
+		scoreUI.printUI(scoreUI.getPos(), scoreUI.getScoreUI());
 		createNewBlock();
 		moveBlock();
 		map->update(*activeBlock, fixedBlocks, score, lines);
@@ -1212,7 +1321,6 @@ public:
 		return false;
 	}
 };
-
 
 // 보드 스크린으로 가져오기
 void Screen::draw(Map* map) {
