@@ -526,6 +526,10 @@ public:
 
 	// board에 남아있는 Block 그리기
 	void drawFixedBlocks(vector<Block*> &fixedBlocks) {
+		for (int i = 315; i < 329; i++)
+		{
+			board[i] = '@';
+		}
 		//매니저에서 고정 블럭들의 shape 받아서 draw
 		vector<Block*>::iterator it;
 		for(it = fixedBlocks.begin(); it != fixedBlocks.end() && !fixedBlocks.empty(); it++)
@@ -636,53 +640,127 @@ public:
 				board[(*it)->getBlockIndex() + 16] = (*it)->getShape()[3];
 				board[(*it)->getBlockIndex() + 30] = (*it)->getShape()[4];
 			}
-		} 
-	}
-
-	// 줄 지우기
-	void eraseLines(Block& block, int& score, int& lines) 
-	{
-		if (block.getIsMoving()) return;
-
-		for (int h = 1; h < getHeight(); h++)
+		}
+		/*for (int h = 1; h < screen->getHeight(); h++)
 		{
 			// 줄이 다 찼는지 확인
+			bool isFull = true;
+			for (int i = 1; i < screen->getWidth() - 1; i++)
+			{
+				Position pos{ i, h };
 
-			if (checkLinesFull(h))
+				if (board[screen->pos2Index(pos)] != '*')
+				{
+					isFull = false;
+				}
+			}
+			if (isFull)
 			{
 				// 윗 라인 모두 아래로 내리기
-				score += 100;
-				lines += 1;
-				moveBlocksDown(h);
+				for (int i = h - 1; i > 0; i--) {
+					for (int j = 1; j < screen->getWidth() - 1; j++)
+					{
+						Position pos2{ j, i };
+						board[screen->pos2Index(pos2) + 15] = board[screen->pos2Index(pos2)];
+					}
+				}
 			}
 			else continue;
-		}
-	}
-
-	// 줄이 다 찼는지 확인
-	bool checkLinesFull(int h) const
-	{
-		for (int i = 1; i < getWidth() - 1; i++) 
+		}*/
+		for (int h = 1; h < screen->getHeight(); h++)
 		{
-			Position pos{ i, h };
-
-			if (board[screen->pos2Index(pos)] != '*')
+			// 줄이 다 찼는지 확인
+			bool isFull = true;
+			for (int i = 1; i < screen->getWidth() - 1; i++)
 			{
-				return false;
-			}
-		}
-		return true;
-	}
+				Position pos{ i, h };
 
-	// 윗 라인 모두 아래로 내리기
-	void moveBlocksDown(int h) 
-	{
-		for (int i = h - 1; i > 0; i--) {
-			for (int j = 1; j < getWidth() - 1; j++)
-			{
-				Position pos2{ j, i };
-				board[pos2Index(pos2) + 15] = board[pos2Index(pos2)];
+				if (board[screen->pos2Index(pos)] != '*')
+				{
+					isFull = false;
+				}
 			}
+			// 한 줄이 다 채워 졌다면 fixedBlocks 에서 해당 줄에 있는 칸을 빈칸으로 표시
+			if (isFull)
+			{
+				for (it = fixedBlocks.begin(); it != fixedBlocks.end() && !fixedBlocks.empty(); it++)
+				{
+					// Dimension (4, 1)
+					if ((*it)->getDimension().comparePos(4, 1))
+					{
+						if ((*it)->getPos().y == h)
+						{
+							(*it)->setShape(0, ' ');
+							(*it)->setShape(1, ' ');
+							(*it)->setShape(2, ' ');
+							(*it)->setShape(3, ' ');
+						}
+					}
+					// Dimension (1, 4)
+					if ((*it)->getDimension().comparePos(1, 4))
+					{
+						for (int i = 0; i < 4; i++)
+						{
+							if ((*it)->getPos().addPos(0, i).y == h)
+							{
+								(*it)->setShape(i, ' ');
+							}
+						}
+					}
+					// Dimension (3, 2)
+					if ((*it)->getDimension().comparePos(3, 2))
+					{
+						if ((*it)->getPos().y == h)
+						{
+							(*it)->setShape(0, ' ');
+							(*it)->setShape(1, ' ');
+							(*it)->setShape(2, ' ');
+						}
+						if ((*it)->getPos().addPos(0, 1).y == h)
+						{
+							(*it)->setShape(3, ' ');
+							(*it)->setShape(4, ' ');
+							(*it)->setShape(5, ' ');
+						}
+					}
+					// Dimension (2, 3)
+					if ((*it)->getDimension().comparePos(2, 3))
+					{
+						if ((*it)->getPos().y == h)
+						{
+							(*it)->setShape(0, ' ');
+							(*it)->setShape(1, ' ');
+						}
+						if ((*it)->getPos().addPos(0, 1).y == h)
+						{
+							(*it)->setShape(2, ' ');
+							(*it)->setShape(3, ' ');
+						}
+						if ((*it)->getPos().addPos(0, 1).y == h)
+						{
+							(*it)->setShape(5, ' ');
+							(*it)->setShape(6, ' ');
+						}
+					}
+					// Dimension (2, 2)
+					if ((*it)->getDimension().comparePos(2, 2)) 
+					{
+						if ((*it)->getPos().y == h)
+						{
+							(*it)->setShape(0, ' ');
+							(*it)->setShape(1, ' ');
+						}
+						if ((*it)->getPos().addPos(0, 1).y == h)
+						{
+							(*it)->setShape(2, ' ');
+							(*it)->setShape(3, ' ');
+						}
+					}
+					(*it)->setPos((*it)->getPos().x, (*it)->getPos().addPos(0, 1).y);
+					
+				}
+			}
+			else continue;
 		}
 	}
 
@@ -809,23 +887,11 @@ public:
 		}
 	}
 
-	// 블럭 공백 채우기
-	void fillBlank(Block& block) {
-		for (int i = 0; i < strlen(block.getShape()); i++)
-		{
-			if (block.getShape()[i] == ' ' && board[pos2Index(block.getPos()) + 15] == '*')
-			{
-				block.setShape(i, '*');
-			}
-		}
-	}
-
 	void update(Block& block, vector<Block*>& fixedBlocks, int& score, int& lines)
 	{
 		initializeBoard();
 		drawFixedBlocks(fixedBlocks);
 		drawBlock(block); // activeBlock draw
-		eraseLines(block, score, lines);
 		freezeBlock(block);
 	}
 };
@@ -954,7 +1020,7 @@ public:
 			input->readInputs();
 			update();
  			screen->render();
-			Sleep(300);
+			Sleep(100);
 		}
 	}
 
@@ -969,7 +1035,55 @@ public:
 		createNewBlock();
 		moveBlock();
 		map->update(*activeBlock, fixedBlocks, score, lines);
+		//eraseLines(score, lines);
 	}
+
+	// 줄 지우기
+	void eraseLines(int& score, int& lines)
+	{
+		if (activeBlock->getIsMoving()) return;
+		for (int h = 1; h < screen->getHeight(); h++)
+		{
+			// 줄이 다 찼는지 확인
+
+			if (checkLinesFull(h))
+			{
+				// 윗 라인 모두 아래로 내리기
+				score += 100;
+				lines += 1;
+				moveBlocksDown(h);
+			}
+			else continue;
+		}
+	}
+
+	// 줄이 다 찼는지 확인
+	bool checkLinesFull(int h) const
+	{
+		for (int i = 1; i < screen->getWidth() - 1; i++)
+		{
+			Position pos{ i, h };
+
+			if (map->getBoard()[screen->pos2Index(pos)] != '*')
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	// 윗 라인 모두 아래로 내리기
+	void moveBlocksDown(int h)
+	{
+		for (int i = h - 1; i > 0; i--) {
+			for (int j = 1; j < screen->getWidth() - 1; j++)
+			{
+				Position pos2{ j, i };
+				map->getBoard()[screen->pos2Index(pos2) + 15] = map->getBoard()[screen->pos2Index(pos2)];
+			}
+		}
+	}
+
 
 	// 새로운 블럭 생성 함수
 	void createNewBlock() {
@@ -993,7 +1107,7 @@ public:
 		// 키입력
 		if (input->getKeyUp(VK_UP))
 		{
-			//activeBlock->turnBlock();
+		//	activeBlock->turnBlock();
 		}
 
 		if (input->getKey(VK_LEFT))
