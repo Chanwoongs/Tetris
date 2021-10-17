@@ -995,12 +995,59 @@ public:
 		}
 	}
 
+	// 줄 지우기
+	void eraseLines(Block& block, int& score, int& lines)
+	{
+		if (block.getIsMoving()) return;
+		for (int h = 1; h < screen->getHeight(); h++)
+		{
+			// 줄이 다 찼는지 확인
+
+			if (checkLinesFull(h))
+			{
+				// 윗 라인 모두 아래로 내리기
+				score += 100;
+				lines += 1;
+				moveBlocksDown(h);
+			}
+			else continue;
+		}
+	}
+
+	// 줄이 다 찼는지 확인
+	bool checkLinesFull(int h) const
+	{
+		for (int i = 1; i < screen->getWidth() - 1; i++)
+		{
+			Position pos{ i, h };
+
+			if (board[screen->pos2Index(pos)] != '*')
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	// 윗 라인 모두 아래로 내리기
+	void moveBlocksDown(int h)
+	{
+		for (int i = h - 1; i > 0; i--) {
+			for (int j = 1; j < screen->getWidth() - 1; j++)
+			{
+				Position pos2{ j, i };
+				board[screen->pos2Index(pos2) + 15] = board[screen->pos2Index(pos2)];
+			}
+		}
+	}
+
 	void update(Block& block, vector<Block*>& fixedBlocks, int& score, int& lines)
 	{
 		initializeBoard();
 		drawFixedBlocks(fixedBlocks);
 		drawBlock(block); // activeBlock draw
 		freezeBlock(block);
+		eraseLines(block, score, lines);
 	}
 };
 
@@ -1146,53 +1193,6 @@ public:
 		map->update(*activeBlock, fixedBlocks, score, lines);
 		//eraseLines(score, lines);
 	}
-
-	// 줄 지우기
-	void eraseLines(int& score, int& lines)
-	{
-		if (activeBlock->getIsMoving()) return;
-		for (int h = 1; h < screen->getHeight(); h++)
-		{
-			// 줄이 다 찼는지 확인
-
-			if (checkLinesFull(h))
-			{
-				// 윗 라인 모두 아래로 내리기
-				score += 100;
-				lines += 1;
-				moveBlocksDown(h);
-			}
-			else continue;
-		}
-	}
-
-	// 줄이 다 찼는지 확인
-	bool checkLinesFull(int h) const
-	{
-		for (int i = 1; i < screen->getWidth() - 1; i++)
-		{
-			Position pos{ i, h };
-
-			if (map->getBoard()[screen->pos2Index(pos)] != '*')
-			{
-				return false;
-			}
-		}
-		return true;
-	}
-
-	// 윗 라인 모두 아래로 내리기
-	void moveBlocksDown(int h)
-	{
-		for (int i = h - 1; i > 0; i--) {
-			for (int j = 1; j < screen->getWidth() - 1; j++)
-			{
-				Position pos2{ j, i };
-				map->getBoard()[screen->pos2Index(pos2) + 15] = map->getBoard()[screen->pos2Index(pos2)];
-			}
-		}
-	}
-
 
 	// 새로운 블럭 생성 함수
 	void createNewBlock() {
