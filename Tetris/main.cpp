@@ -18,6 +18,9 @@ class Input;
 class GameObject;
 class Block;
 class Map;
+class UI;
+class ScoreUI;
+class PreviewUI;
 class GameManager;
 
 //map
@@ -200,13 +203,13 @@ class Block : public GameObject {
 
 public:
 	Block() /// pos 수정 screen 값/ 2로
-		: shape(shape), shapeNum(shapeNum), dm(4, 4), pos{ getWidth() / 2 , 0 }, isMoving(true)
+		: shape(shape), shapeNum(shapeNum), dm(4, 4), pos{ getWidth() / 2 , 1 }, isMoving(true)
 	{
 		srand((unsigned)time(nullptr));
 
 		// shape 랜덤 선정
 		shapeNum = rand() % 7 + 1;
-
+	
 		// shape과 dm 초기화
 		// I Block
 		if (shapeNum == (int)Shape::I) {
@@ -223,8 +226,8 @@ public:
 		// L Block
 		else if (shapeNum == (int)Shape::L) {
 			shape = new char[7];
-			strncpy(shape, "* * **", sizeof("* * **"));
-			dm = { 2,3 };
+			strncpy(shape, "  ****", sizeof("  ****"));
+			dm = { 3,2 };
 		}
 		// O Block
 		else if (shapeNum == (int)Shape::O) {
@@ -354,8 +357,8 @@ public:
 			// 빈칸 구분 없이 \0 전까지만 그린다
 			if ((block.getShapeNum() == 1 && block.getDimension().comparePos(1, 4)) || (block.getShapeNum() == 1 && block.getDimension().comparePos(4, 1)) ||
 				(block.getShapeNum() == 2 && block.getDimension().comparePos(2, 3) && block.getShape()[0] == ' ') ||
-				(block.getShapeNum() == 2 && block.getDimension().comparePos(3, 2) && block.getShape()[0] != ' ') ||
-				(block.getShapeNum() == 3 && block.getDimension().comparePos(2, 3) && block.getShape()[0] != ' ') ||
+				(block.getShapeNum() == 2 && block.getDimension().comparePos(3, 2) && block.getShape()[1] == ' ') ||
+				(block.getShapeNum() == 3 && block.getDimension().comparePos(2, 3) && block.getShape()[1] == ' ') ||
 				(block.getShapeNum() == 3 && block.getDimension().comparePos(3, 2) && block.getShape()[0] == ' ') ||
 				(block.getShapeNum() == 4) ||
 				(block.getShapeNum() == 6 && block.getDimension().comparePos(3, 2) && block.getShape()[0] == ' '))
@@ -367,28 +370,28 @@ public:
 			}
 
 			// 빈칸은 그리지 않고 \0 전까지만 그린다
-			if (block.getShapeNum() == 2 && block.getDimension().comparePos(3, 2))
+			if (block.getShapeNum() == 2 && block.getDimension().comparePos(3, 2) && block.getShape()[1] != ' ')
 			{
 				board[block.getBlockIndex()] = block.getShape()[0];
 				board[block.getBlockIndex() + 1] = block.getShape()[1];
 				board[block.getBlockIndex() + 2] = block.getShape()[2];
 				board[block.getBlockIndex() + 17] = block.getShape()[5];
 			}
-			if (block.getShapeNum() == 2 && block.getDimension().comparePos(2, 3))
+			if (block.getShapeNum() == 2 && block.getDimension().comparePos(2, 3) && block.getShape()[0] != ' ')
 			{
 				board[block.getBlockIndex()] = block.getShape()[0];
 				board[block.getBlockIndex() + 1] = block.getShape()[1];
 				board[block.getBlockIndex() + 15] = block.getShape()[2];
 				board[block.getBlockIndex() + 30] = block.getShape()[4];
 			}
-			if (block.getShapeNum() == 3 && block.getDimension().comparePos(3, 2))
+			if (block.getShapeNum() == 3 && block.getDimension().comparePos(3, 2) && block.getShape()[0] != ' ')
 			{
 				board[block.getBlockIndex()] = block.getShape()[0];
 				board[block.getBlockIndex() + 1] = block.getShape()[1];
 				board[block.getBlockIndex() + 2] = block.getShape()[2];
 				board[block.getBlockIndex() + 15] = block.getShape()[3];
 			}
-			if (block.getShapeNum() == 3 && block.getDimension().comparePos(2, 3))
+			if (block.getShapeNum() == 3 && block.getDimension().comparePos(2, 3) && block.getShape()[1] != ' ')
 			{
 				board[block.getBlockIndex()] = block.getShape()[0];
 				board[block.getBlockIndex() + 1] = block.getShape()[1];
@@ -409,7 +412,7 @@ public:
 				board[block.getBlockIndex() + 16] = block.getShape()[3];
 				board[block.getBlockIndex() + 31] = block.getShape()[5];
 			}
-			if (block.getShapeNum() == 6 && block.getDimension().comparePos(3, 2))
+			if (block.getShapeNum() == 6 && block.getDimension().comparePos(3, 2) && block.getShape()[0] != ' ')
 			{
 				board[block.getBlockIndex()] = block.getShape()[0];
 				board[block.getBlockIndex() + 1] = block.getShape()[1];
@@ -471,8 +474,8 @@ public:
 			// 남아있는 블럭 그리기
 			if (((*it)->getShapeNum() == 1 && (*it)->getDimension().comparePos(1, 4)) || ((*it)->getShapeNum() == 1 && (*it)->getDimension().comparePos(4, 1)) ||
 				((*it)->getShapeNum() == 2 && (*it)->getDimension().comparePos(2, 3) && (*it)->getShape()[0] == ' ') ||
-				((*it)->getShapeNum() == 2 && (*it)->getDimension().comparePos(3, 2) && (*it)->getShape()[0] != ' ') ||
-				((*it)->getShapeNum() == 3 && (*it)->getDimension().comparePos(2, 3) && (*it)->getShape()[0] != ' ') ||
+				((*it)->getShapeNum() == 2 && (*it)->getDimension().comparePos(3, 2) && (*it)->getShape()[1] == ' ') ||
+				((*it)->getShapeNum() == 3 && (*it)->getDimension().comparePos(2, 3) && (*it)->getShape()[1] == ' ') ||
 				((*it)->getShapeNum() == 3 && (*it)->getDimension().comparePos(3, 2) && (*it)->getShape()[0] == ' ') ||
 				((*it)->getShapeNum() == 4) ||
 				((*it)->getShapeNum() == 6 && (*it)->getDimension().comparePos(3, 2) && (*it)->getShape()[0] == ' '))
@@ -482,28 +485,28 @@ public:
 					strncpy(&board[pos2Index((*it)->getPos()) + (getWidth() + 1) * h], &((*it)->getShape()[h * (*it)->getDimension().x]), (*it)->getDimension().x);
 				}
 			}
-			if ((*it)->getShapeNum() == 2 && (*it)->getDimension().comparePos(3, 2))
+			if ((*it)->getShapeNum() == 2 && (*it)->getDimension().comparePos(3, 2) && (*it)->getShape()[1] != ' ')
 			{
 				board[(*it)->getBlockIndex()] = (*it)->getShape()[0];
 				board[(*it)->getBlockIndex() + 1] = (*it)->getShape()[1];
 				board[(*it)->getBlockIndex() + 2] = (*it)->getShape()[2];
 				board[(*it)->getBlockIndex() + 17] = (*it)->getShape()[5];
 			}
-			if ((*it)->getShapeNum() == 2 && (*it)->getDimension().comparePos(2, 3))
+			if ((*it)->getShapeNum() == 2 && (*it)->getDimension().comparePos(2, 3) && (*it)->getShape()[0] != ' ')
 			{
 				board[(*it)->getBlockIndex()] = (*it)->getShape()[0];
 				board[(*it)->getBlockIndex() + 1] = (*it)->getShape()[1];
 				board[(*it)->getBlockIndex() + 15] = (*it)->getShape()[2];
 				board[(*it)->getBlockIndex() + 30] = (*it)->getShape()[4];
 			}
-			if ((*it)->getShapeNum() == 3 && (*it)->getDimension().comparePos(3, 2))
+			if ((*it)->getShapeNum() == 3 && (*it)->getDimension().comparePos(3, 2) && (*it)->getShape()[0] != ' ')
 			{
 				board[(*it)->getBlockIndex()] = (*it)->getShape()[0];
 				board[(*it)->getBlockIndex() + 1] = (*it)->getShape()[1];
 				board[(*it)->getBlockIndex() + 2] = (*it)->getShape()[2];
-				board[(*it)->getBlockIndex() + 17] = (*it)->getShape()[5];
+				board[(*it)->getBlockIndex() + 15] = (*it)->getShape()[3];
 			}
-			if ((*it)->getShapeNum() == 3 && (*it)->getDimension().comparePos(2, 3))
+			if ((*it)->getShapeNum() == 3 && (*it)->getDimension().comparePos(2, 3) && (*it)->getShape()[1] != ' ')
 			{
 				board[(*it)->getBlockIndex()] = (*it)->getShape()[0];
 				board[(*it)->getBlockIndex() + 1] = (*it)->getShape()[1];
@@ -524,7 +527,7 @@ public:
 				board[(*it)->getBlockIndex() + 16] = (*it)->getShape()[3];
 				board[(*it)->getBlockIndex() + 31] = (*it)->getShape()[5];
 			}
-			if ((*it)->getShapeNum() == 6 && (*it)->getDimension().comparePos(3, 2))
+			if ((*it)->getShapeNum() == 6 && (*it)->getDimension().comparePos(3, 2) && (*it)->getShape()[0] != ' ')
 			{
 				board[(*it)->getBlockIndex()] = (*it)->getShape()[0];
 				board[(*it)->getBlockIndex() + 1] = (*it)->getShape()[1];
@@ -563,7 +566,7 @@ public:
 	}
 
 	// 줄 지우기
-	void eraseLines()
+	void eraseLines(int& score, int& lines)
 	{
 		for (int h = 1; h < getHeight() - 1; h++)
 		{
@@ -575,6 +578,9 @@ public:
 			{
 				// 윗 라인 모두 아래로 내리기
 				moveBlocksDown(h);
+				score += 100;
+				lines += 1;
+				isFull = false;
 			}
 		}
 	}
@@ -740,13 +746,214 @@ public:
 		}
 	}
 
-	void update(Block& block, vector<Block*>& fixedBlocks)
+	void update(Block& block, vector<Block*>& fixedBlocks, int& score, int& lines)
 	{
 		initializeBoard();
 		drawFixedBlocks(fixedBlocks);
 		drawBlock(block); // activeBlock draw
 		freezeBlock(block);
-		eraseLines();
+		eraseLines(score, lines);
+	}
+};
+
+class UI : public GameObject {
+protected:
+	Position pos;
+	char* uIBoard;
+public:
+	UI()
+		: pos({ 0, 0 }), uIBoard(nullptr)
+	{
+
+	}
+	~UI()
+	{
+	}
+	virtual void drawUI() {}
+	virtual void printUI(Position pos) {}
+	virtual void printUI(int x, int y) {}
+};
+
+class ScoreUI : public UI {
+	char scoreText[10];
+	char linesText[10];
+	char speedText[10];
+
+public:
+	ScoreUI()
+		: scoreText{ " " }, linesText{ " " }, speedText{ " " }
+	{
+		this->pos.x = screen->getWidth() + 2;
+		this->pos.y = screen->getHeight() - 21;
+
+		this->uIBoard = new char[105];
+	}
+	~ScoreUI()
+	{
+		delete[] uIBoard;
+	}
+
+	// 정수 문자열 변환
+	void int2String(int num, char text[])
+	{
+		sprintf(text, "%d", num);
+	}
+
+	// ScoreUI 화면에 그리기
+	void drawUI(int& score, int& lines, int& speed)
+	{
+		// 초기화
+		memset(uIBoard, ' ', getSize());
+		for (int i = 0; i < 20; i++)
+		{
+			uIBoard[i] = '@';
+		}
+		for (int i = 21; i < 85; i += 21)
+		{
+			uIBoard[i] = '@';
+		}
+		for (int i = 85; i < 104; i++)
+		{
+			uIBoard[i] = '@';
+		}
+		for (int i = 40; i < 104; i += 21)
+		{
+			uIBoard[i] = '@';
+		}
+		for (int i = 20; i < 84; i += 21)
+		{
+			uIBoard[i] = '\n';
+		}
+		uIBoard[104] = '\0';
+
+		int2String(score, scoreText);
+		int2String(lines, linesText);
+		int2String(speed, speedText);
+
+		// Score 
+		strncpy(&uIBoard[22], "SCORE: ", sizeof("SCORE: "));
+		strncpy(&uIBoard[29], scoreText, sizeof(scoreText));
+		// Lines 
+		strncpy(&uIBoard[43], "LINES: ", sizeof("LINES: "));
+		strncpy(&uIBoard[50], linesText, sizeof(linesText));
+		// Speed 
+		strncpy(&uIBoard[64], "SPEED: ", sizeof("SPEED: "));
+		strncpy(&uIBoard[71], speedText, sizeof(speedText));
+	}
+
+	void printUI(Position pos)
+	{
+		Borland::gotoxy(pos);
+		for (int i = 0; i < 21; i++)
+		{
+			printf("%c", uIBoard[i]);
+		}
+		Borland::gotoxy(pos.addPos(0, 1));
+		for (int i = 21; i < 42; i++)
+		{
+			printf("%c", uIBoard[i]);
+		}
+		Borland::gotoxy(pos.addPos(0, 2));
+		for (int i = 42; i < 63; i++)
+		{
+			printf("%c", uIBoard[i]);
+		}
+		Borland::gotoxy(pos.addPos(0, 3));
+		for (int i = 63; i < 84; i++)
+		{
+			printf("%c", uIBoard[i]);
+		}
+		Borland::gotoxy(pos.addPos(0, 4));
+		for (int i = 84; i < 105; i++)
+		{
+			printf("%c", uIBoard[i]);
+		}
+		Borland::gotoxy(0, 0);
+	}
+};
+
+class PreviewUI : public UI {
+
+public:
+	PreviewUI() {
+		this->pos.x = screen->getWidth() + 2;
+		this->pos.y = screen->getHeight() - 10;
+
+		this->uIBoard = new char[63];
+	}
+	~PreviewUI() {
+	}
+
+	void drawUI(Block& nextBlock)
+	{
+		// 초기화
+		memset(uIBoard, ' ', getSize());
+		for (int i = 0; i < 8; i++)
+		{
+			uIBoard[i] = '@';
+		}
+		for (int i = 9; i < 55; i += 9)
+		{
+			uIBoard[i] = '@';
+		}
+		for (int i = 55; i < 62; i++)
+		{
+			uIBoard[i] = '@';
+		}
+		for (int i = 16; i < 53; i += 9)
+		{
+			uIBoard[i] = '@';
+		}
+		for (int i = 8; i < 62; i += 9)
+		{
+			uIBoard[i] = '\n';
+		}
+		uIBoard[62] = '\0';
+
+		for (int h = 0; h < nextBlock.getDimension().y; h++)
+		{
+			strncpy(&uIBoard[21 + 9 * h], &nextBlock.getShape()[h * nextBlock.getDimension().x], nextBlock.getDimension().x);
+		}
+	}
+
+	void printUI(int x, int y) 
+	{
+		Borland::gotoxy(x, y);
+		for (int i = 0; i < 9; i++)
+		{
+			printf("%c", uIBoard[i]);
+		}
+		Borland::gotoxy(x, y + 1);
+		for (int i = 9; i < 18; i++)
+		{
+			printf("%c", uIBoard[i]);
+		}
+		Borland::gotoxy(x, y + 2);
+		for (int i = 18; i < 27; i++)
+		{
+			printf("%c", uIBoard[i]);
+		}
+		Borland::gotoxy(x, y + 3);
+		for (int i = 27; i < 36; i++)
+		{
+			printf("%c", uIBoard[i]);
+		}
+		Borland::gotoxy(x, y + 4);
+		for (int i = 36; i < 45; i++)
+		{
+			printf("%c", uIBoard[i]);
+		}
+		Borland::gotoxy(x, y + 5);
+		for (int i = 45; i < 54; i++)
+		{
+			printf("%c", uIBoard[i]);
+		}
+		Borland::gotoxy(x, y + 6);
+		for (int i = 54; i < 63; i++)
+		{
+			printf("%c", uIBoard[i]);
+		}
+		Borland::gotoxy(0, 0);
 	}
 };
 
@@ -758,14 +965,22 @@ class GameManager {
 	Block* activeBlock;
 	Block* nextBlock;
 	vector<Block*> fixedBlocks;
+	ScoreUI scoreUI;
+	PreviewUI previewUI;
 
 	bool isLooping;
 	bool isFall;
+	int score;
+	int lines;
+	int speed;
 
 public:
 	GameManager()
-		: map(new Map), screen(Screen::GetInstance()), input(Input::GetInstance()), activeBlock(new Block), nextBlock(new Block), isFall(false), isLooping(true)
+		: map(new Map), screen(Screen::GetInstance()), input(Input::GetInstance()), activeBlock(new Block), nextBlock(new Block), 
+		isFall(false), isLooping(true), score(0), lines(0), speed(200)
 	{
+		this->scoreUI = scoreUI;
+		this->previewUI = previewUI;
 	}
 	~GameManager()
 	{
@@ -784,17 +999,21 @@ public:
 			input->readInputs();
 			update();
 			screen->render();
-			Sleep(150);
+			Sleep(speed);
 		}
 	}
 
 	void update() {
 		if (isGameOver(fixedBlocks)) {
 			isLooping = false;
-			Borland::gotoxy(screen->getWidth() + 5, screen->getHeight() - 10);
+			Borland::gotoxy(screen->getWidth() + 7, screen->getHeight() - 5);
 			printf("GAME OVER");
 		}
-		map->update(*activeBlock, fixedBlocks);
+		map->update(*activeBlock, fixedBlocks, score, lines);
+		scoreUI.drawUI(score, lines, speed);
+		scoreUI.printUI(screen->getWidth() + 1);
+		previewUI.drawUI(*nextBlock);
+		previewUI.printUI(screen->getWidth() + 1, screen->getHeight() - 16);
 		createNewBlock();
 		moveBlock();
 	}
@@ -908,7 +1127,6 @@ public:
 		}
 	}
 
-
 	// 왼쪽 벽 충돌 처리
 	bool checkLeftCollision()
 	{
@@ -978,8 +1196,8 @@ public:
 		// Dimension (2, 3)
 		if (activeBlock->getDimension().comparePos(2, 3)) {
 			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(1, 0)) + 1] != ' ') return true;
-			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(1, 1)) + 1] != ' ') return true;
-			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(1, 2)) + 1] != ' ') return true;
+			else if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(1, 1)) + 1] != ' ') return true;
+			else if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(1, 2)) + 1] != ' ') return true;
 		}
 
 		else return false;
@@ -991,14 +1209,13 @@ public:
 		vector<Block*>::iterator it;
 		for (it = fixedBlocks.begin(); it != fixedBlocks.end() && !fixedBlocks.empty(); it++)
 		{
-			if ((*it)->getPos().y - 1 <= 0) {
+			if ((*it)->getPos().y - 1 <= 1) {
 				return true;
 			}
 		}
 		return false;
 	}
 };
-
 
 // 보드 스크린으로 가져오기
 void Screen::draw(Map* map) {
