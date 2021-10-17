@@ -255,80 +255,6 @@ public:
 		delete[] shape;
 	}
 
-	// 블럭 반시계 방향으로 돌리기
-	void turnBlock(Block& block) {
-		// 1 X 4 -> 4 X 1
-		if (block.getDimension().comparePos(1, 4))
-		{
-			if (block.getPos().x > getWidth() - 4) return;
-
-			char temp[4] = { ' ' };
-			temp[0] = block.getShape()[0];
-			temp[1] = block.getShape()[1];
-			temp[2] = block.getShape()[2];
-			temp[3] = block.getShape()[3];
-
-			for (int i = 0; i < 4; i++)
-			{
-				block.setShape(i, temp[i]);
-			}
-			block.setDimension(4, 1);
-			
-		}
-		// 4 X 1 -> 1 X 4
-		else if (block.getDimension().comparePos(4, 1))
-		{
-			if (block.getPos().y > getHeight() - 4) return;
-
-			char temp[4] = { ' ' };
-			temp[0] = block.getShape()[3];
-			temp[1] = block.getShape()[2];
-			temp[2] = block.getShape()[1];
-			temp[3] = block.getShape()[0];
-
-			for (int i = 0; i < 4; i++)
-			{
-				block.setShape(i, temp[i]);
-			}
-			block.setDimension(1, 4);
-		}
-		// 3 X 2 -> 2 X 3
-		else if (block.getDimension().comparePos(3, 2))
-		{
-			char temp[6] = { ' ' };
-			temp[0] = block.getShape()[2];
-			temp[1] = block.getShape()[5];
-			temp[2] = block.getShape()[1];
-			temp[3] = block.getShape()[4];
-			temp[4] = block.getShape()[0];
-			temp[5] = block.getShape()[3];
-
-			for (int i = 0; i < 6; i++)
-			{
-				block.setShape(i, temp[i]);
-			}
-			block.setDimension(2, 3);
-			block.setPos(block.getPos().x, block.getPos().y - 1);
-		}
-		// 2 X 3 -> 3 X 2
-		else if (block.getDimension().comparePos(2, 3))
-		{
-			char temp[6] = { ' ' };
-			temp[0] = block.getShape()[1];
-			temp[1] = block.getShape()[3];
-			temp[2] = block.getShape()[5];
-			temp[3] = block.getShape()[0];
-			temp[4] = block.getShape()[2];
-			temp[5] = block.getShape()[4];
-
-			for (int i = 0; i < 6; i++)
-			{
-				block.setShape(i, temp[i]);
-			}
-			block.setDimension(3, 2);
-		}
-	}
-
 	Position getPos() {
 		return pos;
 	}
@@ -688,114 +614,114 @@ public:
 				block.setMovingFlag(false);
 			}
 		}
-		else if (block.getShapeNum() == 1 && block.getDimension().comparePos(4, 1)) {
+		if (block.getShapeNum() == 1 && block.getDimension().comparePos(4, 1)) {
 			if (board[pos2Index(block.getPos().addPos(0, 1))] != ' ' || board[pos2Index(block.getPos().addPos(1, 1))] != ' ' || board[pos2Index(block.getPos().addPos(2, 1))] != ' ' || board[pos2Index(block.getPos().addPos(3, 1))] != ' ') {
 				block.setMovingFlag(false);
 			}
 		}
 		// shape J
-		else if (block.getShapeNum() == 2 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos())] == ' ') {
+		if (block.getShapeNum() == 2 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos())] == ' ') {
 			if (board[pos2Index(block.getPos().addPos(0, 3))] != ' ' || board[pos2Index(block.getPos().addPos(1, 3))] != ' ')
 			{
 				block.setMovingFlag(false);
 			}
 		}
-		else if (block.getShapeNum() == 2 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos())] != ' ') {
+		if (block.getShapeNum() == 2 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos())] != ' ') {
 			if (board[pos2Index(block.getPos().addPos(0, 3))] != ' ' || board[pos2Index(block.getPos().addPos(1, 1))] != ' ')
 			{
 				block.setMovingFlag(false);
 			}
 		}
-		else if (block.getShapeNum() == 2 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos().addPos(0, 1))] == ' ') {
+		if (block.getShapeNum() == 2 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos().addPos(0, 1))] == ' ') {
 			if (board[pos2Index(block.getPos().addPos(0, 1))] != ' ' || board[pos2Index(block.getPos().addPos(1, 1))] != ' ' || board[pos2Index(block.getPos().addPos(2, 2))] != ' ')
 			{
 				block.setMovingFlag(false);
 			}
 		}
-		else if (block.getShapeNum() == 2 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos().addPos(0, 1))] != ' ') {
+		if (block.getShapeNum() == 2 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos().addPos(0, 1))] != ' ') {
 			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ' || board[pos2Index(block.getPos().addPos(2, 2))] != ' ')
 			{
 				block.setMovingFlag(false);
 			}
 		}
 		// shape L
-		else if (block.getShapeNum() == 3 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos().addPos(1, 0))] == ' ') {
+		if (block.getShapeNum() == 3 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos().addPos(1, 0))] == ' ') {
 			if (board[pos2Index(block.getPos().addPos(0, 3))] != ' ' || board[pos2Index(block.getPos().addPos(1, 3))] != ' ')
 			{
 				block.setMovingFlag(false);
 			}
 		}
-		else if (block.getShapeNum() == 3 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos().addPos(1, 0))] != ' ') {
+		if (block.getShapeNum() == 3 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos().addPos(1, 0))] != ' ') {
 			if (board[pos2Index(block.getPos().addPos(0, 1))] != ' ' || board[pos2Index(block.getPos().addPos(1, 3))] != ' ')
 			{
 				block.setMovingFlag(false);
 			}
 		}
-		else if (block.getShapeNum() == 3 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos())] == ' ') {
+		if (block.getShapeNum() == 3 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos())] == ' ') {
 			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ' || board[pos2Index(block.getPos().addPos(2, 2))] != ' ')
 			{
 				block.setMovingFlag(false);
 			}
 		}
-		else if (block.getShapeNum() == 3 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos())] != ' ') {
+		if (block.getShapeNum() == 3 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos())] != ' ') {
 			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 1))] != ' ' || board[pos2Index(block.getPos().addPos(2, 1))] != ' ')
 			{
 				block.setMovingFlag(false);
 			}
 		}
 		// shape O
-		else if (block.getShapeNum() == 4) {
+		if (block.getShapeNum() == 4) {
 			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ')
 			{
 				block.setMovingFlag(false);
 			}
 		}
 		// shape S
-		else if (block.getShapeNum() == 5 && block.getDimension().comparePos(2, 3)) {
+		if (block.getShapeNum() == 5 && block.getDimension().comparePos(2, 3)) {
 			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 3))] != ' ')
 			{
 				block.setMovingFlag(false);
 			}
 		}
-		else if (block.getShapeNum() == 5 && block.getDimension().comparePos(3, 2)) {
+		if (block.getShapeNum() == 5 && block.getDimension().comparePos(3, 2)) {
 			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ' || board[pos2Index(block.getPos().addPos(2, 1))] != ' ')
 			{
 				block.setMovingFlag(false);
 			}
 		}
 		// shape T
-		else if (block.getShapeNum() == 6 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos())] == ' ') {
+		if (block.getShapeNum() == 6 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos())] == ' ') {
 			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ' || board[pos2Index(block.getPos().addPos(2, 2))] != ' ')
 			{
 				block.setMovingFlag(false);
 			}
 		}
-		else if (block.getShapeNum() == 6 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos())] != ' ') {
+		if (block.getShapeNum() == 6 && block.getDimension().comparePos(3, 2) && board[pos2Index(block.getPos())] != ' ') {
 			if (board[pos2Index(block.getPos().addPos(0, 1))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ' || board[pos2Index(block.getPos().addPos(2, 1))] != ' ')
 			{
 				block.setMovingFlag(false);
 			}
 		}
-		else if (block.getShapeNum() == 6 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos())] == ' ') {
+		if (block.getShapeNum() == 6 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos())] == ' ') {
 			if (board[pos2Index(block.getPos().addPos(0, 2))] != ' ' || board[pos2Index(block.getPos().addPos(1, 3))] != ' ')
 			{
 				block.setMovingFlag(false);
 			}
 		}
-		else if (block.getShapeNum() == 6 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos())] != ' ') {
+		if (block.getShapeNum() == 6 && block.getDimension().comparePos(2, 3) && board[pos2Index(block.getPos())] != ' ') {
 			if (board[pos2Index(block.getPos().addPos(0, 3))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ')
 			{
 				block.setMovingFlag(false);
 			}
 		}
 		// shape Z
-		else if (block.getShapeNum() == 7 && block.getDimension().comparePos(2, 3)) {
+		if (block.getShapeNum() == 7 && block.getDimension().comparePos(2, 3)) {
 			if (board[pos2Index(block.getPos().addPos(0, 3))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ')
 			{
 				block.setMovingFlag(false);
 			}
 		}
-		else if (block.getShapeNum() == 7 && block.getDimension().comparePos(3, 2)) {
+		if (block.getShapeNum() == 7 && block.getDimension().comparePos(3, 2)) {
 			if (board[pos2Index(block.getPos().addPos(0, 1))] != ' ' || board[pos2Index(block.getPos().addPos(1, 2))] != ' ' || board[pos2Index(block.getPos().addPos(2, 2))] != ' ')
 			{
 				block.setMovingFlag(false);
@@ -858,7 +784,7 @@ public:
 			input->readInputs();
 			update();
 			screen->render();
-			Sleep(100);
+			Sleep(150);
 		}
 	}
 
@@ -895,15 +821,13 @@ public:
 		// 키입력
 		if (input->getKeyUp(VK_UP))
 		{
-			activeBlock->turnBlock(*activeBlock);
+			turnBlock(*activeBlock);
 		}
-
 		if (input->getKey(VK_LEFT))
 		{
 			if (checkLeftCollision()) return;
 			activeBlock->setPos(activeBlock->getPos().x - 1, activeBlock->getPos().y);
 		}
-
 		if (input->getKey(VK_RIGHT))
 		{
 			if (checkRightCollision()) return;
@@ -911,15 +835,89 @@ public:
 		}
 	}
 
+	// 블럭 반시계 방향으로 돌리기
+	void turnBlock(Block& block) {
+		// 1 X 4 -> 4 X 1
+		if (block.getDimension().comparePos(1, 4))
+		{
+			if (map->getBoard()[screen->pos2Index(block.getPos().addPos(3, 0))] != ' ') return;
+
+			char temp[4] = { ' ' };
+			temp[0] = block.getShape()[0];
+			temp[1] = block.getShape()[1];
+			temp[2] = block.getShape()[2];
+			temp[3] = block.getShape()[3];
+
+			for (int i = 0; i < 4; i++)
+			{
+				block.setShape(i, temp[i]);
+			}
+			block.setDimension(4, 1);
+
+		}
+		// 4 X 1 -> 1 X 4
+		else if (block.getDimension().comparePos(4, 1))
+		{
+			if (map->getBoard()[screen->pos2Index(block.getPos().addPos(0, 3))] != ' ') return;
+
+			char temp[4] = { ' ' };
+			temp[0] = block.getShape()[3];
+			temp[1] = block.getShape()[2];
+			temp[2] = block.getShape()[1];
+			temp[3] = block.getShape()[0];
+
+			for (int i = 0; i < 4; i++)
+			{
+				block.setShape(i, temp[i]);
+			}
+			block.setDimension(1, 4);
+		}
+		// 3 X 2 -> 2 X 3
+		else if (block.getDimension().comparePos(3, 2))
+		{
+			char temp[6] = { ' ' };
+			temp[0] = block.getShape()[2];
+			temp[1] = block.getShape()[5];
+			temp[2] = block.getShape()[1];
+			temp[3] = block.getShape()[4];
+			temp[4] = block.getShape()[0];
+			temp[5] = block.getShape()[3];
+
+			for (int i = 0; i < 6; i++)
+			{
+				block.setShape(i, temp[i]);
+			}
+			block.setDimension(2, 3);
+		}
+		// 2 X 3 -> 3 X 2
+		else if (block.getDimension().comparePos(2, 3))
+		{
+			char temp[6] = { ' ' };
+			temp[0] = block.getShape()[1];
+			temp[1] = block.getShape()[3];
+			temp[2] = block.getShape()[5];
+			temp[3] = block.getShape()[0];
+			temp[4] = block.getShape()[2];
+			temp[5] = block.getShape()[4];
+
+			for (int i = 0; i < 6; i++)
+			{
+				block.setShape(i, temp[i]);
+			}
+			block.setDimension(3, 2);
+		}
+	}
+
+
 	// 왼쪽 벽 충돌 처리
 	bool checkLeftCollision()
 	{
 		// Dimension (4, 1) 
 		if (activeBlock->getDimension().comparePos(1, 4)) {
 			if (map->getBoard()[screen->pos2Index(activeBlock->getPos()) - 1] != ' ') return true;
-			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 1)) - 1] != ' ') return true;
-			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 2)) - 1] != ' ') return true;
-			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 3)) - 1] != ' ') return true;
+			else if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 1)) - 1] != ' ') return true;
+			else if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 2)) - 1] != ' ') return true;
+			else if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 3)) - 1] != ' ') return true;
 		}
 
 		// Dimension (1, 4)
@@ -930,20 +928,20 @@ public:
 		// Dimension (2, 2)
 		if (activeBlock->getDimension().comparePos(2, 2)) {
 			if (map->getBoard()[screen->pos2Index(activeBlock->getPos()) - 1] != ' ') return true;
-			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 1)) - 1] != ' ') return true;
+			else if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 1)) - 1] != ' ') return true;
 		}
 
 		// Dimension (3, 2)
 		if (activeBlock->getDimension().comparePos(3, 2)) {
 			if (map->getBoard()[screen->pos2Index(activeBlock->getPos()) - 1] != ' ') return true;
-			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 1)) - 1] != ' ') return true;
+			else if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 1)) - 1] != ' ') return true;
 		}
 
 		// Dimension (2, 3)
 		if (activeBlock->getDimension().comparePos(2, 3)) {
 			if (map->getBoard()[screen->pos2Index(activeBlock->getPos()) - 1] != ' ') return true;
-			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 1)) - 1] != ' ') return true;
-			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 2)) - 1] != ' ') return true;
+			else if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 1)) - 1] != ' ') return true;
+			else if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 2)) - 1] != ' ') return true;
 		}
 
 		else return false;
@@ -955,9 +953,9 @@ public:
 		// Dimension (4, 1) 
 		if (activeBlock->getDimension().comparePos(1, 4)) {
 			if (map->getBoard()[screen->pos2Index(activeBlock->getPos()) + 1] != ' ') return true;
-			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 1)) + 1] != ' ') return true;
-			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 2)) + 1] != ' ') return true;
-			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 3)) + 1] != ' ') return true;
+			else if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 1)) + 1] != ' ') return true;
+			else if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 2)) + 1] != ' ') return true;
+			else if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 3)) + 1] != ' ') return true;
 		}
 
 		// Dimension (1, 4)
@@ -968,13 +966,13 @@ public:
 		// Dimension (2, 2)
 		if (activeBlock->getDimension().comparePos(2, 2)) {
 			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(1, 0)) + 1] != ' ') return true;
-			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(1, 1)) + 1] != ' ') return true;
+			else if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(1, 1)) + 1] != ' ') return true;
 		}
 
 		// Dimension (3, 2)
 		if (activeBlock->getDimension().comparePos(3, 2)) {
 			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(2, 0)) + 1] != ' ') return true;
-			if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(2, 1)) + 1] != ' ') return true;
+			else if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(2, 1)) + 1] != ' ') return true;
 		}
 
 		// Dimension (2, 3)
