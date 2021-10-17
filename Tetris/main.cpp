@@ -18,6 +18,9 @@ class Input;
 class GameObject;
 class Block;
 class Map;
+class UI;
+class ScoreUI;
+class PreviewUI;
 class GameManager;
 
 //map
@@ -80,6 +83,12 @@ public:
 	int pos2Index(const Position& pos) const
 	{
 		return (getWidth() + 1) * pos.y + pos.x; // x + 15y
+	}
+
+	// 좌표를 Index로 변화
+	int point2Index(const int x, const int y) 
+	{
+		return (getWidth() + 1) * y + x;
 	}
 
 	void draw(Map* map);
@@ -164,6 +173,7 @@ public:
 		:screen(Screen::GetInstance())
 	{
 	}
+	virtual ~GameObject() {}
 
 	int getWidth() const {
 		return screen->getWidth();
@@ -179,6 +189,10 @@ public:
 
 	int pos2Index(Position pos) {
 		return screen->pos2Index(pos);
+	}
+
+	int point2Index(int x, int y) {
+		return screen->point2Index(x, y);
 	}
 }; 
 
@@ -251,7 +265,7 @@ public:
 			dm = { 3,2 };
 		}
 	}
-	~Block() {
+	~Block() override {
 		delete[] shape;
 	}
 
@@ -370,7 +384,7 @@ public:
 		: board(new char[getSize()])
 	{
 	}
-	~Map() {
+	~Map() override {
 		delete[] board;
 	}
 
@@ -626,19 +640,22 @@ public:
 	}
 
 	// 줄 지우기
-	void eraseLines() 
+	void eraseLines(Block& block, int& score, int& lines) 
 	{
-		for (int h = 1; h < getHeight() - 1; h++) 
-		{
-			bool isFull = true;
-			// 줄이 다 찼는지 확인
-			isFull = checkLinesFull(h);
+		if (block.getIsMoving()) return;
 
-			if (isFull) 
+		for (int h = 1; h < getHeight(); h++)
+		{
+			// 줄이 다 찼는지 확인
+
+			if (checkLinesFull(h))
 			{
 				// 윗 라인 모두 아래로 내리기
+				score += 100;
+				lines += 1;
 				moveBlocksDown(h);
 			}
+			else continue;
 		}
 	}
 
@@ -803,35 +820,101 @@ public:
 		}
 	}
 
-	void update(Block& block, vector<Block*>& fixedBlocks)
+	void update(Block& block, vector<Block*>& fixedBlocks, int& score, int& lines)
 	{
 		initializeBoard();
 		drawFixedBlocks(fixedBlocks);
 		drawBlock(block); // activeBlock draw
-		eraseLines();
+		eraseLines(block, score, lines);
 		freezeBlock(block);
 	}
 };
 
-class UI : GameObject {
-	char* scoreBoard;
-	char* previewBoard;
-	int score;
-	
+class UI : public GameObject {
+protected:
+	Position pos;
+	char* uIBoard;
 public:
-	UI()
-		: score(0), scoreBoard(new char[]),
+	UI(const Position& pos, char* uIBoard)
+		: pos(pos), uIBoard(uIBoard)
 	{
 
 	}
-	
-	void showScore() {
-
+	~UI() 
+	{
 	}
-	void showNextBlock() {
 
+	void printUI(Position pos, const char* uIBoard) {
+		Borland::gotoxy(pos);
+		printf("%s", uIBoard);
 	}
 };
+
+class ScoreUI : public UI {
+	char scoreText[10];
+	char linesText[10];
+	char speedText[10];
+
+public:
+	ScoreUI()
+		: scoreText{" "}, linesText{" "}, speedText{" "}, UI({0, 0}, uIBoard)
+	{
+		this->pos.x = screen->getWidth() + 2;
+		this->pos.y = screen->getHeight() - 21;
+
+		this->uIBoard = new char[100];
+	}
+	~ScoreUI()
+	{
+		delete[] uIBoard;
+	}
+
+	Position getPos() const
+	{
+		return pos;
+	}
+
+	const char* getScoreUI() {
+		return uIBoard;
+	}
+
+	void int2String(int num, char text[]) 
+	{
+		sprintf(text, "%d", num);
+	}
+
+	void drawScoreUI(int &score, int &lines, int &speed)
+	{
+		strncpy(&uIBoard[0], "-------------------\n", sizeof("-------------------\n"));
+		strncpy(&uIBoard[20], "l                 l\n", sizeof("l                 l\n"));
+		strncpy(&uIBoard[40], "l                 l\n", sizeof("l                 l\n"));
+		strncpy(&uIBoard[60], "l                 l\n", sizeof("l                 l\n"));
+		strncpy(&uIBoard[80], "-------------------\n", sizeof("-------------------\n"));
+		
+		strncpy(&uIBoard[21], "Score: ", sizeof("Score: "));
+		strncpy(&uIBoard[41], "Lines: ", sizeof("Score: "));
+		strncpy(&uIBoard[61], "Speed: ", sizeof("Score: "));
+
+		int2String(score, scoreText);
+		int2String(lines, linesText);
+		int2String(speed, speedText);
+		
+		strncpy(&uIBoard[28], scoreText, sizeof(scoreText));
+		strncpy(&uIBoard[48], linesText, sizeof(linesText));
+		strncpy(&uIBoard[68], speedText, sizeof(speedText));
+	}
+};
+
+//class PreviewUI : public UI {
+//
+//public:
+//	PreviewUI() {
+//
+//	}
+//	~PreviewUI() override {
+//
+//	}
+//};
 
 class GameManager {
 	Map* map;
@@ -840,13 +923,18 @@ class GameManager {
 	Block* activeBlock;
 	Block* nextBlock;
 	vector<Block*> fixedBlocks; 
+	ScoreUI scoreUI;
 
 	bool isLooping;
 	bool isFall;
+	int score;
+	int lines;
+	int speed;
 
 public:
 	GameManager()
-		: map(new Map), screen(Screen::GetInstance()),  input(Input::GetInstance()), activeBlock(new Block), nextBlock(new Block), isFall(false), isLooping(true)
+		: map(new Map), screen(Screen::GetInstance()),  input(Input::GetInstance()), activeBlock(new Block), nextBlock(new Block), //scoreUI(scoreUI), 
+		isFall(false), isLooping(true), score(0), lines(0), speed(1000)
 	{
 	}
 	~GameManager()
@@ -871,14 +959,16 @@ public:
 	}
 
 	void update() {
-		if (isGameOver(fixedBlocks)) {
+		/*if (isGameOver(fixedBlocks)) {
 			isLooping = false;
 			Borland::gotoxy(screen->getWidth() + 5, screen->getHeight() - 10);
 			printf("GAME OVER");
-		}
-		map->update(*activeBlock, fixedBlocks);
+		}*/
+		//scoreUI.drawScoreUI(score, lines, speed);
+		//scoreUI.printUI(scoreUI.getPos(), scoreUI.getScoreUI());
 		createNewBlock();
 		moveBlock();
+		map->update(*activeBlock, fixedBlocks, score, lines);
 	}
 
 	// 새로운 블럭 생성 함수
