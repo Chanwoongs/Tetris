@@ -577,9 +577,7 @@ public:
 			if (isFull)
 			{
 				// 윗 라인 모두 아래로 내리기
-				moveBlocksDown(h);
-				score += 100;
-				lines += 1;
+				moveBlocksDown(h, score, lines);
 				isFull = false;
 			}
 		}
@@ -596,12 +594,13 @@ public:
 			{
 				return false;
 			}
+			else continue;
 		}
 		return true;
 	}
 
 	// 윗 라인 모두 아래로 내리기
-	void moveBlocksDown(int h)
+	void moveBlocksDown(int h, int& score, int& lines)
 	{
 		for (int i = h - 1; i > 0; i--) {
 			for (int j = 1; j < getWidth() - 1; j++)
@@ -610,6 +609,8 @@ public:
 				board[pos2Index(pos2) + 15] = board[pos2Index(pos2)];
 			}
 		}
+		score += 100;
+		lines += 1;
 	}
 
 	// 블럭 멈추기
@@ -764,9 +765,8 @@ public:
 	UI()
 		: pos({ 0, 0 }), uIBoard(nullptr)
 	{
-
 	}
-	~UI()
+	virtual ~UI()
 	{
 	}
 	virtual void drawUI() {}
@@ -803,22 +803,22 @@ public:
 	void drawUI(int& score, int& lines, int& speed)
 	{
 		// 초기화
-		memset(uIBoard, ' ', getSize());
+		memset(uIBoard, ' ', 105);
 		for (int i = 0; i < 20; i++)
 		{
-			uIBoard[i] = '@';
+			uIBoard[i] = ' ';
 		}
 		for (int i = 21; i < 85; i += 21)
 		{
-			uIBoard[i] = '@';
+			uIBoard[i] = ' ';
 		}
 		for (int i = 85; i < 104; i++)
 		{
-			uIBoard[i] = '@';
+			uIBoard[i] = ' ';
 		}
 		for (int i = 40; i < 104; i += 21)
 		{
-			uIBoard[i] = '@';
+			uIBoard[i] = ' ';
 		}
 		for (int i = 20; i < 84; i += 21)
 		{
@@ -887,22 +887,22 @@ public:
 	void drawUI(Block& nextBlock)
 	{
 		// 초기화
-		memset(uIBoard, ' ', getSize());
+		memset(uIBoard, ' ', 63);
 		for (int i = 0; i < 8; i++)
 		{
-			uIBoard[i] = '@';
+			uIBoard[i] = ' ';
 		}
 		for (int i = 9; i < 55; i += 9)
 		{
-			uIBoard[i] = '@';
+			uIBoard[i] = ' ';
 		}
 		for (int i = 55; i < 62; i++)
 		{
-			uIBoard[i] = '@';
+			uIBoard[i] = ' ';
 		}
 		for (int i = 16; i < 53; i += 9)
 		{
-			uIBoard[i] = '@';
+			uIBoard[i] = ' ';
 		}
 		for (int i = 8; i < 62; i += 9)
 		{
@@ -977,7 +977,7 @@ class GameManager {
 public:
 	GameManager()
 		: map(new Map), screen(Screen::GetInstance()), input(Input::GetInstance()), activeBlock(new Block), nextBlock(new Block), 
-		isFall(false), isLooping(true), score(0), lines(0), speed(100)
+		isFall(false), isLooping(true), score(0), lines(0), speed(150)
 	{
 		this->scoreUI = scoreUI;
 		this->previewUI = previewUI;
@@ -995,9 +995,9 @@ public:
 
 		while (isLooping) {
 			screen->clear();
-			screen->draw(map);
 			input->readInputs();
 			update();
+			screen->draw(map);
 			screen->render();
 			Sleep(speed);
 		}
@@ -1009,13 +1009,13 @@ public:
 			Borland::gotoxy(screen->getWidth() + 7, screen->getHeight() - 5);
 			printf("GAME OVER");
 		}
-		map->update(*activeBlock, fixedBlocks, score, lines);
 		scoreUI.drawUI(score, lines, speed);
 		scoreUI.printUI(screen->getWidth() + 1);
 		previewUI.drawUI(*nextBlock);
 		previewUI.printUI(screen->getWidth() + 1, screen->getHeight() - 16);
 		createNewBlock();
 		moveBlock();
+		map->update(*activeBlock, fixedBlocks, score, lines);
 	}
 
 	// 새로운 블럭 생성 함수
@@ -1038,19 +1038,50 @@ public:
 		activeBlock->setPos(activeBlock->getPos().x, activeBlock->getPos().y + 1);
 
 		// 키입력
-		if (input->getKeyUp(VK_UP))
+		if (input->getKeyDown(VK_UP))
 		{
 			turnBlock(*activeBlock);
 		}
+
+		if (input->getKeyDown(VK_LEFT))
+		{
+			if (checkLeftCollision()) return;
+			activeBlock->setPos(activeBlock->getPos().x - 1, activeBlock->getPos().y);
+		}
+
+		if (input->getKeyDown(VK_RIGHT))
+		{
+			if (checkRightCollision()) return;
+			activeBlock->setPos(activeBlock->getPos().x + 1, activeBlock->getPos().y);
+		}
+
 		if (input->getKey(VK_LEFT))
 		{
 			if (checkLeftCollision()) return;
 			activeBlock->setPos(activeBlock->getPos().x - 1, activeBlock->getPos().y);
 		}
+
 		if (input->getKey(VK_RIGHT))
 		{
 			if (checkRightCollision()) return;
 			activeBlock->setPos(activeBlock->getPos().x + 1, activeBlock->getPos().y);
+		}
+
+		if (input->getKey(VK_DOWN))
+		{
+			speed = 50;
+		}
+		else speed = 150;
+
+		if (input->getKeyUp(VK_SPACE))
+		{
+			if (activeBlock->getShapeNum() == 4) {
+				if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 2))] != ' ' || map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(1, 2))] != ' ')
+				{
+					if (activeBlock->getPos().y > screen->getHeight()) return;
+					activeBlock->setPos(activeBlock->getPos().x, activeBlock->getPos().y + 1);
+				}
+			}
 		}
 	}
 
@@ -1094,7 +1125,7 @@ public:
 		// 3 X 2 -> 2 X 3
 		else if (block.getDimension().comparePos(3, 2))
 		{
-			if (map->getBoard()[screen->pos2Index(block.getPos().addPos(2, 0))] != ' ') return;
+			if (map->getBoard()[screen->pos2Index(block.getPos().addPos(0, 2))] != ' ') return;
 
 			char temp[6] = { ' ' };
 			temp[0] = block.getShape()[2];
@@ -1113,7 +1144,7 @@ public:
 		// 2 X 3 -> 3 X 2
 		else if (block.getDimension().comparePos(2, 3))
 		{
-			if (map->getBoard()[screen->pos2Index(block.getPos().addPos(0, 2))] != ' ') return;
+			if (map->getBoard()[screen->pos2Index(block.getPos().addPos(2, 0))] != ' ') return;
 
 			char temp[6] = { ' ' };
 			temp[0] = block.getShape()[1];
@@ -1243,23 +1274,33 @@ void Input::errorExit(const char* lpszMessage)
 	ExitProcess(0);
 }
 bool Input::getKeyDown(WORD virtualKeyCode) {
-	return false;
-}
-bool Input::getKey(WORD virtualKeyCode) {
-	if (cNumRead == 0) return false; // 현재 콘솔에서 읽은 갯수가 0이냐?
+	if (cNumRead == 0) return false;
 
 	for (int i = 0; i < cNumRead; i++)
 	{
 		if (irInBuf[i].EventType != KEY_EVENT) continue;
 
-		if (irInBuf[i].Event.KeyEvent.wVirtualKeyCode == virtualKeyCode && irInBuf[i].Event.KeyEvent.bKeyDown == TRUE) {
+		if (irInBuf[i].Event.KeyEvent.wVirtualKeyCode == virtualKeyCode && irInBuf[i].Event.KeyEvent.bKeyDown == TRUE && irInBuf[i].Event.KeyEvent.wRepeatCount == 1) {
+			return true;
+		}
+		return false;
+	}
+}
+bool Input::getKey(WORD virtualKeyCode) {
+	if (cNumRead == 0) return false; 
+
+	for (int i = 0; i < cNumRead; i++)
+	{
+		if (irInBuf[i].EventType != KEY_EVENT) continue;
+
+		if (irInBuf[i].Event.KeyEvent.wVirtualKeyCode == virtualKeyCode && irInBuf[i].Event.KeyEvent.bKeyDown == TRUE && irInBuf[i].Event.KeyEvent.wRepeatCount > 1) {
 			return true;
 		}
 		return false;
 	}
 }
 bool Input::getKeyUp(WORD virtualKeyCode) {
-	if (cNumRead == 0) return false; // 현재 콘솔에서 읽은 갯수가 0이냐?
+	if (cNumRead == 0) return false;
 
 	for (int i = 0; i < cNumRead; i++)
 	{
