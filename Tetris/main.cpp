@@ -977,7 +977,7 @@ class GameManager {
 public:
 	GameManager()
 		: map(new Map), screen(Screen::GetInstance()), input(Input::GetInstance()), activeBlock(new Block), nextBlock(new Block), 
-		isFall(false), isLooping(true), score(0), lines(0), speed(200)
+		isFall(false), isLooping(true), score(0), lines(0), speed(100)
 	{
 		this->scoreUI = scoreUI;
 		this->previewUI = previewUI;
@@ -1094,6 +1094,8 @@ public:
 		// 3 X 2 -> 2 X 3
 		else if (block.getDimension().comparePos(3, 2))
 		{
+			if (map->getBoard()[screen->pos2Index(block.getPos().addPos(2, 0))] != ' ') return;
+
 			char temp[6] = { ' ' };
 			temp[0] = block.getShape()[2];
 			temp[1] = block.getShape()[5];
@@ -1111,6 +1113,8 @@ public:
 		// 2 X 3 -> 3 X 2
 		else if (block.getDimension().comparePos(2, 3))
 		{
+			if (map->getBoard()[screen->pos2Index(block.getPos().addPos(0, 2))] != ' ') return;
+
 			char temp[6] = { ' ' };
 			temp[0] = block.getShape()[1];
 			temp[1] = block.getShape()[3];
@@ -1162,7 +1166,7 @@ public:
 			else if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 2)) - 1] != ' ') return true;
 		}
 
-		else return false;
+		return false;
 	}
 
 	// 오른쪽 벽 충돌 처리
@@ -1200,7 +1204,7 @@ public:
 			else if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(1, 2)) + 1] != ' ') return true;
 		}
 
-		else return false;
+		return false;
 	}
 
 	// 게임 오버 조건 확인
