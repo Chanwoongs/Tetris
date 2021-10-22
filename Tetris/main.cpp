@@ -736,17 +736,6 @@ public:
 		}
 	}
 
-	// 블럭 공백 채우기
-	void fillBlank(Block& block) {
-		for (int i = 0; i < strlen(block.getShape()); i++)
-		{
-			if (block.getShape()[i] == ' ' && board[pos2Index(block.getPos()) + 15] == '*')
-			{
-				block.setShape(i, '*');
-			}
-		}
-	}
-
 	void update(Block& block, vector<Block*>& fixedBlocks, int& score, int& lines)
 	{
 		initializeBoard();
@@ -1072,17 +1061,6 @@ public:
 			speed = 50;
 		}
 		else speed = 150;
-
-		if (input->getKeyUp(VK_SPACE))
-		{
-			if (activeBlock->getShapeNum() == 4) {
-				if (map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(0, 2))] != ' ' || map->getBoard()[screen->pos2Index(activeBlock->getPos().addPos(1, 2))] != ' ')
-				{
-					if (activeBlock->getPos().y > screen->getHeight()) return;
-					activeBlock->setPos(activeBlock->getPos().x, activeBlock->getPos().y + 1);
-				}
-			}
-		}
 	}
 
 	// 블럭 반시계 방향으로 돌리기
